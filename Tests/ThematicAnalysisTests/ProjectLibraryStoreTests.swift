@@ -8,7 +8,7 @@ final class ProjectLibraryStoreTests: XCTestCase {
         let root = temporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        let segment = TranscriptSegment(order: 1, speaker: "A", start: "00:00", end: "00:03", text: "Korunacak veri")
+        let segment = TranscriptSegment(order: 1, speaker: "A", start: "00:00", end: "00:03", text: "Data to preserve")
         let legacy = AnalysisProject(
             name: "Existing Study",
             interviews: [Interview(name: "Interview", participant: "Participant A", segments: [segment])],
@@ -23,7 +23,7 @@ final class ProjectLibraryStoreTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: legacyURL.path))
         let item = try XCTUnwrap(firstLaunch.projects.first)
         firstLaunch.openProject(item)
-        XCTAssertEqual(firstLaunch.activeProjectStore?.project.interviews.first?.segments.first?.text, "Korunacak veri")
+        XCTAssertEqual(firstLaunch.activeProjectStore?.project.interviews.first?.segments.first?.text, "Data to preserve")
         firstLaunch.closeProject()
 
         let secondLaunch = ProjectLibraryStore(storageRoot: root)
@@ -49,6 +49,33 @@ final class ProjectLibraryStoreTests: XCTestCase {
         let first = try XCTUnwrap(library.projects.first(where: { $0.name == "First Study" }))
         library.openProject(first)
         XCTAssertEqual(library.activeProjectStore?.project.name, "First Study")
+    }
+
+    @MainActor
+    func testCreatesEditableSyntheticDemoWithoutChangingBlankProjectDefaults() throws {
+        let root = temporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let library = ProjectLibraryStore(storageRoot: root)
+
+        library.createDemoProject()
+
+        let project = try XCTUnwrap(library.activeProjectStore?.project)
+        XCTAssertEqual(project.name, "Demo — AI-Assisted Work")
+        XCTAssertEqual(project.interviews.count, 1)
+        XCTAssertEqual(project.interviews[0].segments.count, 8)
+        XCTAssertEqual(project.interviews[0].codingUnits.count, 5)
+        XCTAssertEqual(project.themes.count, 11)
+        XCTAssertTrue(project.themes.contains { theme in
+            guard let parentID = theme.parentID,
+                  let parent = project.themes.first(where: { $0.id == parentID }),
+                  let grandparentID = parent.parentID else { return false }
+            return project.themes.contains(where: { $0.id == grandparentID })
+        })
+
+        library.closeProject()
+        XCTAssertTrue(library.createProject(named: "Blank Study"))
+        XCTAssertTrue(library.activeProjectStore?.project.themes.isEmpty == true)
+        XCTAssertTrue(library.activeProjectStore?.project.interviews.isEmpty == true)
     }
 
     private func temporaryRoot() -> URL {

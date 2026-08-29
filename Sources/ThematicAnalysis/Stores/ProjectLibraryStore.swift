@@ -53,6 +53,22 @@ final class ProjectLibraryStore: ObservableObject {
         return true
     }
 
+    func createDemoProject() {
+        closeProject()
+        let project = DemoProjectFactory.makeProject()
+        let item = ProjectLibraryItem(
+            name: project.name,
+            participantCount: project.interviews.count,
+            codingUnitCount: project.interviews.reduce(0) { $0 + $1.codingUnits.count }
+        )
+        let store = AnalysisStore(storageRoot: projectRoot(for: item), initialProject: project)
+        projects.append(item)
+        persistIndex()
+        activeProjectID = item.id
+        activeProjectStore = store
+        lastMessage = "Demo project created. All content is synthetic."
+    }
+
     func openProject(_ item: ProjectLibraryItem) {
         closeProject()
         let root = projectRoot(for: item)

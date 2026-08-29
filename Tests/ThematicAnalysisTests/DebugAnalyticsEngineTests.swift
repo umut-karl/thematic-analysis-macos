@@ -5,8 +5,8 @@ final class DebugAnalyticsEngineTests: XCTestCase {
     func testProjectAnalyticsRollsDescendantAssignmentsIntoComparedTheme() throws {
         let root = ThemeNode(name: "Tool", parentID: nil, colorIndex: 0)
         let child = ThemeNode(name: "Assistant", parentID: root.id, colorIndex: 0)
-        let other = ThemeNode(name: "Tehdit", parentID: nil, colorIndex: 1)
-        let firstSegment = TranscriptSegment(order: 1, part: nil, speaker: "A", start: "", end: "", text: "Birinci")
+        let other = ThemeNode(name: "Threat", parentID: nil, colorIndex: 1)
+        let firstSegment = TranscriptSegment(order: 1, part: nil, speaker: "A", start: "", end: "", text: "First")
         let secondSegment = TranscriptSegment(order: 1, part: nil, speaker: "B", start: "", end: "", text: "Second")
         let first = Interview(
             name: "Participant A Transcript",
@@ -29,7 +29,7 @@ final class DebugAnalyticsEngineTests: XCTestCase {
 
         let dataset = DebugAnalyticsEngine.project(project, focusThemeID: nil, themeLimit: 5)
         let rootMetric = try XCTUnwrap(dataset.metrics.first(where: { $0.theme.name == "Tool" }))
-        let otherMetric = try XCTUnwrap(dataset.metrics.first(where: { $0.theme.name == "Tehdit" }))
+        let otherMetric = try XCTUnwrap(dataset.metrics.first(where: { $0.theme.name == "Threat" }))
 
         XCTAssertEqual(rootMetric.occurrenceCount, 2)
         XCTAssertEqual(rootMetric.participantCount, 1)
@@ -41,7 +41,7 @@ final class DebugAnalyticsEngineTests: XCTestCase {
     }
 
     func testFocusedAnalyticsComparesImmediateChildren() throws {
-        let root = ThemeNode(name: "Ontoloji", parentID: nil, colorIndex: 0)
+        let root = ThemeNode(name: "Ontology", parentID: nil, colorIndex: 0)
         let child = ThemeNode(name: "Tool", parentID: root.id, colorIndex: 0)
         let segment = TranscriptSegment(order: 1, part: nil, speaker: "A", start: "", end: "", text: "Text")
         let interview = Interview(

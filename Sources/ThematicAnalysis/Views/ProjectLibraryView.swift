@@ -91,6 +91,17 @@ private struct ProjectWelcomeView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
+
+                Button {
+                    library.createDemoProject()
+                } label: {
+                    Label("Try Demo Project", systemImage: "play.circle")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.tint)
+                .padding(.vertical, 5)
+                .help("Create an editable project containing synthetic sample data")
             }
             .padding(.top, 34)
 

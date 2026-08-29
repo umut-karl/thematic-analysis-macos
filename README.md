@@ -18,6 +18,13 @@ across participants.
   participant prevalence, and Framework Matrix views.
 - Create and restore complete project backups.
 
+## Built-in demo
+
+Choose **Try Demo Project** on the project screen to create an editable,
+synthetic example. It contains one short interview, five coded excerpts, and
+an eleven-node hierarchy with themes, subthemes, and third-level themes.
+Regular new projects still start completely empty.
+
 ## Screenshots
 
 ### Project library
