@@ -1,0 +1,12 @@
+.DS_Store
+.build/
+dist/
+tmp/
+.swiftpm/
+DerivedData/
+*.xcuserstate
+*.zip
+
+# Local research data and Codex workspace configuration are not part of the app.
+Research Data/
+.codex/
