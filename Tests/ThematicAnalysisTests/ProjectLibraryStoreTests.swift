@@ -18,7 +18,7 @@ final class ProjectLibraryStoreTests: XCTestCase {
         let legacyURL = root.appendingPathComponent("active-project.json")
         try JSONEncoder.thematic.encode(legacy).write(to: legacyURL, options: .atomic)
 
-        let firstLaunch = ProjectLibraryStore(storageRoot: root)
+        let firstLaunch = ProjectLibraryStore(storageRoot: root, includeDemoProject: false)
         XCTAssertEqual(firstLaunch.projects.count, 1)
         XCTAssertTrue(FileManager.default.fileExists(atPath: legacyURL.path))
         let item = try XCTUnwrap(firstLaunch.projects.first)
@@ -26,7 +26,7 @@ final class ProjectLibraryStoreTests: XCTestCase {
         XCTAssertEqual(firstLaunch.activeProjectStore?.project.interviews.first?.segments.first?.text, "Data to preserve")
         firstLaunch.closeProject()
 
-        let secondLaunch = ProjectLibraryStore(storageRoot: root)
+        let secondLaunch = ProjectLibraryStore(storageRoot: root, includeDemoProject: false)
         XCTAssertEqual(secondLaunch.projects.count, 1)
     }
 
@@ -34,7 +34,7 @@ final class ProjectLibraryStoreTests: XCTestCase {
     func testCreatesAndReopensIndependentProjects() throws {
         let root = temporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }
-        let library = ProjectLibraryStore(storageRoot: root)
+        let library = ProjectLibraryStore(storageRoot: root, includeDemoProject: false)
 
         XCTAssertTrue(library.createProject(named: "First Study"))
         XCTAssertEqual(library.activeProjectStore?.project.name, "First Study")
@@ -52,13 +52,13 @@ final class ProjectLibraryStoreTests: XCTestCase {
     }
 
     @MainActor
-    func testCreatesEditableSyntheticDemoWithoutChangingBlankProjectDefaults() throws {
+    func testInstallsEditableSyntheticDemoWithoutChangingBlankProjectDefaults() throws {
         let root = temporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }
         let library = ProjectLibraryStore(storageRoot: root)
 
-        library.createDemoProject()
-
+        let demo = try XCTUnwrap(library.projects.first(where: { $0.isDemo == true }))
+        library.openProject(demo)
         let project = try XCTUnwrap(library.activeProjectStore?.project)
         XCTAssertEqual(project.name, "Demo — AI-Assisted Work")
         XCTAssertEqual(project.interviews.count, 1)
@@ -76,6 +76,10 @@ final class ProjectLibraryStoreTests: XCTestCase {
         XCTAssertTrue(library.createProject(named: "Blank Study"))
         XCTAssertTrue(library.activeProjectStore?.project.themes.isEmpty == true)
         XCTAssertTrue(library.activeProjectStore?.project.interviews.isEmpty == true)
+        library.closeProject()
+
+        let reopenedLibrary = ProjectLibraryStore(storageRoot: root)
+        XCTAssertEqual(reopenedLibrary.projects.filter { $0.isDemo == true }.count, 1)
     }
 
     private func temporaryRoot() -> URL {

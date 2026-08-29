@@ -20,10 +20,10 @@ across participants.
 
 ## Built-in demo
 
-Choose **Try Demo Project** on the project screen to create an editable,
-synthetic example. It contains one short interview, five coded excerpts, and
-an eleven-node hierarchy with themes, subthemes, and third-level themes.
-Regular new projects still start completely empty.
+The project library includes an editable **Demo — AI-Assisted Work** project
+made entirely from synthetic data. It contains one short interview, five coded
+excerpts, and an eleven-node hierarchy with themes, subthemes, and third-level
+themes. Regular new projects still start completely empty.
 
 ## Screenshots
 

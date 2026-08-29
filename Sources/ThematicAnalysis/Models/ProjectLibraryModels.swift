@@ -8,6 +8,7 @@ struct ProjectLibraryItem: Identifiable, Codable, Hashable {
     var updatedAt: Date
     var participantCount: Int?
     var codingUnitCount: Int?
+    var isDemo: Bool?
 
     init(
         id: UUID = UUID(),
@@ -16,7 +17,8 @@ struct ProjectLibraryItem: Identifiable, Codable, Hashable {
         createdAt: Date = .now,
         updatedAt: Date = .now,
         participantCount: Int? = 0,
-        codingUnitCount: Int? = 0
+        codingUnitCount: Int? = 0,
+        isDemo: Bool? = false
     ) {
         self.id = id
         self.name = name
@@ -25,6 +27,7 @@ struct ProjectLibraryItem: Identifiable, Codable, Hashable {
         self.updatedAt = updatedAt
         self.participantCount = participantCount
         self.codingUnitCount = codingUnitCount
+        self.isDemo = isDemo
     }
 }
 

@@ -14,7 +14,7 @@ final class ProjectLibraryStore: ObservableObject {
     private let indexURL: URL
     private let legacyMigrationMarkerURL: URL
 
-    init(storageRoot: URL? = nil) {
+    init(storageRoot: URL? = nil, includeDemoProject: Bool = true) {
         let base = storageRoot ?? Self.defaultStorageRoot()
         self.storageRoot = base
         projectsRoot = base.appendingPathComponent("Projects", isDirectory: true)
@@ -26,6 +26,7 @@ final class ProjectLibraryStore: ObservableObject {
         loadIndex()
         migrateLegacyProjectIfNeeded()
         refreshProjectMetadata()
+        if includeDemoProject { installDemoProjectIfNeeded() }
     }
 
     var sortedProjects: [ProjectLibraryItem] {
@@ -53,20 +54,34 @@ final class ProjectLibraryStore: ObservableObject {
         return true
     }
 
-    func createDemoProject() {
-        closeProject()
+    private func installDemoProjectIfNeeded() {
+        if let index = projects.firstIndex(where: {
+            $0.isDemo == true || $0.name == "Demo — AI-Assisted Work"
+        }) {
+            if projects[index].isDemo != true {
+                projects[index].isDemo = true
+                persistIndex()
+            }
+            return
+        }
+
         let project = DemoProjectFactory.makeProject()
         let item = ProjectLibraryItem(
             name: project.name,
             participantCount: project.interviews.count,
-            codingUnitCount: project.interviews.reduce(0) { $0 + $1.codingUnits.count }
+            codingUnitCount: project.interviews.reduce(0) { $0 + $1.codingUnits.count },
+            isDemo: true
         )
-        let store = AnalysisStore(storageRoot: projectRoot(for: item), initialProject: project)
-        projects.append(item)
-        persistIndex()
-        activeProjectID = item.id
-        activeProjectStore = store
-        lastMessage = "Demo project created. All content is synthetic."
+        let root = projectRoot(for: item)
+        do {
+            try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
+            try JSONEncoder.thematic.encode(project)
+                .write(to: root.appendingPathComponent("active-project.json"), options: .atomic)
+            projects.append(item)
+            persistIndex()
+        } catch {
+            lastMessage = "Could not install the demo project: \(error.localizedDescription)"
+        }
     }
 
     func openProject(_ item: ProjectLibraryItem) {
