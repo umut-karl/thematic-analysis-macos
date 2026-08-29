@@ -7,7 +7,7 @@ final class EditingAndBackupTests: XCTestCase {
     func testParticipantInformationCanBeUpdatedWithoutChangingTranscriptOrCoding() throws {
         let root = temporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }
-        let store = AnalysisStore(storageRoot: root)
+        let store = AnalysisStore(storageRoot: root, initialProject: Self.fixtureProject())
         let interview = try XCTUnwrap(store.project.interviews.first)
         let segmentIDs = interview.segments.map(\.id)
         let codingUnitIDs = interview.codingUnits.map(\.id)
@@ -38,7 +38,7 @@ final class EditingAndBackupTests: XCTestCase {
     func testThemeNarrativePersistsWithProject() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("ThematicAnalysis-Theme-Note-Test-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
-        let store = AnalysisStore(storageRoot: root)
+        let store = AnalysisStore(storageRoot: root, initialProject: Self.fixtureProject())
         let themeID = try XCTUnwrap(store.project.themes.first?.id)
 
         store.updateThemeNote(themeID, note: "This theme covers how the participant defines artificial intelligence.")
@@ -52,7 +52,7 @@ final class EditingAndBackupTests: XCTestCase {
     func testMergingRowsPreservesTextAndRenumbersTranscript() throws {
         let root = temporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }
-        let store = AnalysisStore(storageRoot: root)
+        let store = AnalysisStore(storageRoot: root, initialProject: Self.fixtureProject())
         let before = try XCTUnwrap(store.selectedInterview?.segments)
         store.selectedSegmentIDs = Set(before.prefix(2).map(\.id))
         store.mergeSelectedTranscriptRows()
@@ -67,7 +67,7 @@ final class EditingAndBackupTests: XCTestCase {
     func testDeletingRowRemovesItFromTranscript() throws {
         let root = temporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }
-        let store = AnalysisStore(storageRoot: root)
+        let store = AnalysisStore(storageRoot: root, initialProject: Self.fixtureProject())
         let before = try XCTUnwrap(store.selectedInterview?.segments)
         store.selectedSegmentIDs = [try XCTUnwrap(before.first?.id)]
         store.deleteSelectedTranscriptRows()
@@ -97,7 +97,7 @@ final class EditingAndBackupTests: XCTestCase {
     func testAddingAnotherThemeSavesIntoSameCodingUnitAndKeepsSelection() throws {
         let root = temporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }
-        let store = AnalysisStore(storageRoot: root)
+        let store = AnalysisStore(storageRoot: root, initialProject: Self.fixtureProject())
         let segmentID = try XCTUnwrap(store.selectedInterview?.segments.first?.id)
         let themes = store.project.themes.prefix(2).map(\.id)
         XCTAssertEqual(themes.count, 2)
@@ -112,24 +112,28 @@ final class EditingAndBackupTests: XCTestCase {
         XCTAssertEqual(matching?.first?.themeIDs, Set(themes))
     }
 
-    func testBundledDefaultThemeCatalogMatchesStarterHierarchy() {
-        let nodes = DefaultThemeCatalog.nodes
-        XCTAssertEqual(nodes.count, 46)
-        XCTAssertEqual(nodes.filter { $0.parentID == nil }.map(\.name).sorted(), ["Attitudes", "Context", "Experiences", "Practices"])
-        let byID = Dictionary(uniqueKeysWithValues: nodes.map { ($0.id, $0) })
-        let deepest = nodes.first(where: { $0.name == "Quality control" })
-        XCTAssertNotNil(deepest)
-        XCTAssertEqual(themePath(for: deepest?.id, in: byID), ["Practices", "Review", "Quality control"])
+    @MainActor
+    func testFreshStoreStartsWithoutStarterData() {
+        let root = temporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = AnalysisStore(storageRoot: root)
+        XCTAssertTrue(store.project.interviews.isEmpty)
+        XCTAssertTrue(store.project.themes.isEmpty)
     }
 
-    private func themePath(for id: UUID?, in nodes: [UUID: ThemeNode]) -> [String] {
-        var result: [String] = []
-        var current = id.flatMap { nodes[$0] }
-        while let node = current {
-            result.append(node.name)
-            current = node.parentID.flatMap { nodes[$0] }
-        }
-        return result.reversed()
+    private static func fixtureProject() -> AnalysisProject {
+        let firstTheme = ThemeNode(name: "Theme A", parentID: nil, colorIndex: 0)
+        let secondTheme = ThemeNode(name: "Theme B", parentID: nil, colorIndex: 1)
+        let segments = [
+            TranscriptSegment(order: 1, speaker: "A", start: "00:00", end: "00:03", text: "First excerpt."),
+            TranscriptSegment(order: 2, speaker: "B", start: "00:03", end: "00:06", text: "Second excerpt."),
+            TranscriptSegment(order: 3, speaker: "A", start: "00:06", end: "00:09", text: "Third excerpt.")
+        ]
+        return AnalysisProject(
+            name: "Test Project",
+            interviews: [Interview(name: "Test Interview", participant: "Participant A", segments: segments)],
+            themes: [firstTheme, secondTheme]
+        )
     }
 
     private func temporaryRoot() -> URL {

@@ -39,7 +39,7 @@ final class ProjectLibraryStoreTests: XCTestCase {
         XCTAssertTrue(library.createProject(named: "First Study"))
         XCTAssertEqual(library.activeProjectStore?.project.name, "First Study")
         XCTAssertEqual(library.activeProjectStore?.project.interviews.count, 0)
-        XCTAssertEqual(library.activeProjectStore?.project.themes.count, DefaultThemeCatalog.nodes.count)
+        XCTAssertEqual(library.activeProjectStore?.project.themes.count, 0)
         library.closeProject()
 
         XCTAssertTrue(library.createProject(named: "Second Study"))
