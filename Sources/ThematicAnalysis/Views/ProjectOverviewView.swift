@@ -14,15 +14,15 @@ struct ProjectOverviewView: View {
             VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(store.project.name).font(.largeTitle).fontWeight(.semibold)
-                    Text("Cross-case workspace").foregroundStyle(.secondary)
+                    Text("Vakalar arası çalışma alanı").foregroundStyle(.secondary)
                 }
                 HStack(spacing: 12) {
-                    MetricCard(title: "Interview", value: store.project.interviews.count, symbol: "person.2")
-                    MetricCard(title: "Transcript Rows", value: totalSegments, symbol: "text.alignleft")
-                    MetricCard(title: "Coding Units", value: totalUnits, symbol: "tag")
-                    MetricCard(title: "Themes Used", value: usedThemes.count, symbol: "point.3.connected.trianglepath.dotted")
+                    MetricCard(title: "Görüşme", value: store.project.interviews.count, symbol: "person.2")
+                    MetricCard(title: "Transkript satırı", value: totalSegments, symbol: "text.alignleft")
+                    MetricCard(title: "Kodlama birimi", value: totalUnits, symbol: "tag")
+                    MetricCard(title: "Kullanılan tema", value: usedThemes.count, symbol: "point.3.connected.trianglepath.dotted")
                 }
-                GroupBox("Interviews") {
+                GroupBox("Görüşmeler") {
                     VStack(spacing: 0) {
                         ForEach(store.project.interviews) { interview in
                             Button {
@@ -35,15 +35,15 @@ struct ProjectOverviewView: View {
                                         Text(interview.participant).font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer()
-                                    (Text(interview.segments.count.formatted()) + Text(" row(s)")).foregroundStyle(.secondary)
-                                    (Text(interview.codingUnits.count.formatted()) + Text(" coding item(s)")).frame(width: 90, alignment: .trailing)
+                                    (Text(interview.segments.count.formatted()) + Text(" satır")).foregroundStyle(.secondary)
+                                    (Text(interview.codingUnits.count.formatted()) + Text(" kodlama")).frame(width: 90, alignment: .trailing)
                                 }.contentShape(Rectangle()).padding(.vertical, 9)
                             }.buttonStyle(.plain)
                             if interview.id != store.project.interviews.last?.id { Divider() }
                         }
                     }.padding(.horizontal, 8)
                 }
-                GroupBox("Most Used Themes") {
+                GroupBox("En sık kullanılan temalar") {
                     VStack(spacing: 10) {
                         ForEach(themeUsage.prefix(8), id: \.id) { item in
                             HStack {
@@ -54,10 +54,10 @@ struct ProjectOverviewView: View {
                                 Text(item.count.formatted()).monospacedDigit().frame(width: 32, alignment: .trailing)
                             }
                         }
-                        if themeUsage.isEmpty { Text("No theme usage yet.").foregroundStyle(.secondary) }
+                        if themeUsage.isEmpty { Text("Tema kullanımı henüz yok.").foregroundStyle(.secondary) }
                     }.padding(8)
                 }
-                Text("Counts show the distribution of coding records, not the importance of themes.")
+                Text("Sayılar temaların önemini değil, yalnızca kodlama kayıtlarının dağılımını gösterir.")
                     .font(.caption).foregroundStyle(.secondary)
             }.padding(22).frame(maxWidth: 1000, alignment: .leading)
         }

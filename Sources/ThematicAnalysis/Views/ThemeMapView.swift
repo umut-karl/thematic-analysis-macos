@@ -1,12 +1,10 @@
 import SwiftUI
+import Observation
 
 struct ThemeMapView: View {
     @ObservedObject var store: AnalysisStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var zoom: CGFloat = 1
-    @State private var baseZoom: CGFloat = 1
-    @State private var panOffset: CGSize = .zero
-    @State private var basePanOffset: CGSize = .zero
+    @State private var viewportState = ThemeMapViewportState()
     @State private var query = ""
     @State private var selectedThemeID: UUID?
     @State private var collapsedThemeIDs: Set<UUID> = []
@@ -18,27 +16,22 @@ struct ThemeMapView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Theme Map").font(.title2).fontWeight(.semibold)
-                    (Text(store.project.themes.count.formatted()) + Text(" nodes · unlimited hierarchy")).foregroundStyle(.secondary)
+                    Text("Tema Haritası").font(.title2).fontWeight(.semibold)
+                    (Text(store.project.themes.count.formatted()) + Text(" düğüm · sınırsız hiyerarşi")).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Image(systemName: "minus.magnifyingglass")
-                Slider(value: $zoom, in: 0.2...2.2, onEditingChanged: { editing in
-                    if !editing { baseZoom = zoom }
-                }).frame(width: 140)
-                Image(systemName: "plus.magnifyingglass")
-                Text("\(Int(zoom * 100))%").font(.caption).monospacedDigit().foregroundStyle(.secondary).frame(width: 42)
+                ThemeMapZoomControls(viewportState: viewportState)
                 Menu {
-                    Button("Expand All Branches") {
+                    Button("Tüm Dalları Aç") {
                         updateAllBranchesAndFit { collapsedThemeIDs.removeAll() }
                     }
-                    Button("Collapse All Branches") {
+                    Button("Tüm Dalları Daralt") {
                         updateAllBranchesAndFit {
                             collapsedThemeIDs = Set(store.project.themes.filter { !store.children(of: $0.id).isEmpty }.map(\.id))
                         }
                     }
-                } label: { Label("Branches", systemImage: "arrow.down.right.and.arrow.up.left") }
-                Button("Fit") { viewportResetToken += 1 }
+                } label: { Label("Dallar", systemImage: "arrow.down.right.and.arrow.up.left") }
+                Button("Sığdır") { viewportResetToken += 1 }
             }.padding(16)
 
             ThemeMapViewport(
@@ -47,20 +40,21 @@ struct ThemeMapView: View {
                 query: query,
                 selectedThemeID: $selectedThemeID,
                 collapsedThemeIDs: $collapsedThemeIDs,
-                zoom: $zoom,
-                baseZoom: $baseZoom,
-                panOffset: $panOffset,
-                basePanOffset: $basePanOffset,
+                viewportState: viewportState,
                 resetToken: $viewportResetToken
             )
-            .searchable(text: $query, prompt: "Search themes on the map")
+            .searchable(text: $query, prompt: "Haritada tema ara")
         }
         .inspector(isPresented: Binding(
             get: { selectedThemeID != nil },
             set: { if !$0 { selectedThemeID = nil } }
         )) {
             if let selectedThemeID {
-                ThemeEvidenceInspector(store: store, themeID: selectedThemeID)
+                ThemeEvidenceInspector(
+                    store: store,
+                    themeID: selectedThemeID,
+                    close: { self.selectedThemeID = nil }
+                )
                     .inspectorColumnWidth(min: 300, ideal: 360, max: 460)
             }
         }
@@ -80,6 +74,65 @@ struct ThemeMapView: View {
     }
 }
 
+private struct ThemeMapZoomControls: View {
+    @Bindable var viewportState: ThemeMapViewportState
+
+    var body: some View {
+        Image(systemName: "minus.magnifyingglass")
+        Slider(value: $viewportState.zoom, in: 0.2...2.2, onEditingChanged: { editing in
+            if !editing { viewportState.baseZoom = viewportState.zoom }
+        })
+        .frame(width: 140)
+        Image(systemName: "plus.magnifyingglass")
+        Text("\(Int(viewportState.zoom * 100))%")
+            .font(.caption)
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+            .frame(width: 42)
+    }
+}
+
+@Observable
+@MainActor
+final class ThemeMapViewportState {
+    var zoom: CGFloat = 1
+    var baseZoom: CGFloat = 1
+    var panOffset: CGSize = .zero
+    var basePanOffset: CGSize = .zero
+    private(set) var hasInitialFit = false
+
+    func fit(layoutSize: CGSize, in viewport: CGSize) {
+        guard layoutSize.width > 0, layoutSize.height > 0 else { return }
+        let fitted = min((viewport.width - 70) / layoutSize.width, (viewport.height - 70) / layoutSize.height)
+        let targetZoom = min(max(fitted, 0.2), 1.15)
+        let targetOffset = CGSize(
+            width: (viewport.width - layoutSize.width * targetZoom) / 2,
+            height: (viewport.height - layoutSize.height * targetZoom) / 2
+        )
+        baseZoom = targetZoom
+        basePanOffset = targetOffset
+        zoom = targetZoom
+        panOffset = targetOffset
+        hasInitialFit = true
+    }
+
+    func preserveCenter(from oldSize: CGSize, to newSize: CGSize) {
+        guard hasInitialFit, oldSize.width > 0, oldSize.height > 0 else { return }
+        let adjustment = CGSize(
+            width: (newSize.width - oldSize.width) / 2,
+            height: (newSize.height - oldSize.height) / 2
+        )
+        panOffset = CGSize(
+            width: panOffset.width + adjustment.width,
+            height: panOffset.height + adjustment.height
+        )
+        basePanOffset = CGSize(
+            width: basePanOffset.width + adjustment.width,
+            height: basePanOffset.height + adjustment.height
+        )
+    }
+}
+
 private struct ThemeMapViewport: View {
     @ObservedObject var store: AnalysisStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -87,10 +140,7 @@ private struct ThemeMapViewport: View {
     let query: String
     @Binding var selectedThemeID: UUID?
     @Binding var collapsedThemeIDs: Set<UUID>
-    @Binding var zoom: CGFloat
-    @Binding var baseZoom: CGFloat
-    @Binding var panOffset: CGSize
-    @Binding var basePanOffset: CGSize
+    @Bindable var viewportState: ThemeMapViewportState
     @Binding var resetToken: Int
 
     var body: some View {
@@ -100,71 +150,33 @@ private struct ThemeMapViewport: View {
                     .contentShape(Rectangle())
                     .onTapGesture { selectedThemeID = nil }
 
-                ZStack(alignment: .topLeading) {
-                    ForEach(layout.rootIDs, id: \.self) { rootID in
-                        if let to = layout.positions[rootID] {
-                            ThemeConnector(from: layout.centerPosition, to: to, centerNode: true)
-                                .stroke(
-                                    ThemePalette.color(store.project.themes.first(where: { $0.id == rootID })?.colorIndex ?? 0).opacity(0.68),
-                                    style: StrokeStyle(lineWidth: 2, lineCap: .round)
-                                )
-                                .transition(.opacity)
-                                .allowsHitTesting(false)
-                        }
-                    }
-                    ForEach(layout.edges) { edge in
-                        if let from = layout.positions[edge.parent], let to = layout.positions[edge.child] {
-                            ThemeConnector(from: from, to: to, centerNode: false)
-                                .stroke(
-                                    ThemePalette.color(store.project.themes.first(where: { $0.id == edge.child })?.colorIndex ?? 0).opacity(0.68),
-                                    style: StrokeStyle(lineWidth: 2, lineCap: .round)
-                                )
-                                .transition(.opacity)
-                                .allowsHitTesting(false)
-                        }
-                    }
-
-                    Text("Themes")
-                        .font(.headline)
-                        .padding(.horizontal, 18).padding(.vertical, 10)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(.secondary.opacity(0.5)))
-                        .position(x: layout.centerPosition.x + 70, y: layout.centerPosition.y + 24)
-
-                    ForEach(store.project.themes) { theme in
-                        if let position = layout.positions[theme.id] {
-                            let children = store.children(of: theme.id)
-                            ThemeMapNode(
-                                theme: theme,
-                                highlighted: !query.isEmpty && (theme.name.localizedCaseInsensitiveContains(query) || store.themePathName(for: theme.id).localizedCaseInsensitiveContains(query)),
-                                selected: selectedThemeID == theme.id,
-                                childCount: children.count,
-                                collapsed: collapsedThemeIDs.contains(theme.id),
-                                select: { selectedThemeID = theme.id },
-                                toggleCollapse: {
-                                    updateBranches {
-                                        if collapsedThemeIDs.contains(theme.id) { collapsedThemeIDs.remove(theme.id) }
-                                        else { collapsedThemeIDs.insert(theme.id) }
-                                    }
-                                }
-                            )
-                            .position(x: position.x + 95, y: position.y + 24)
-                            .transition(.opacity.combined(with: .scale(scale: 0.94)))
-                        }
-                    }
-                }
+                ThemeMapCanvas(
+                    themes: store.project.themes,
+                    layout: layout,
+                    query: query,
+                    selectedThemeID: selectedThemeID,
+                    collapsedThemeIDs: collapsedThemeIDs,
+                    selectTheme: { selectedThemeID = selectedThemeID == $0 ? nil : $0 },
+                    toggleCollapse: toggleCollapse
+                )
+                .equatable()
                 .frame(width: layout.size.width, height: layout.size.height)
-                .scaleEffect(zoom, anchor: .topLeading)
-                .offset(panOffset)
+                .scaleEffect(viewportState.zoom, anchor: .topLeading)
+                .offset(viewportState.panOffset)
                 .animation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.86), value: collapsedThemeIDs)
             }
             .clipped()
             .contentShape(Rectangle())
             .simultaneousGesture(dragGesture(viewportSize: proxy.size))
             .simultaneousGesture(magnificationGesture(viewportSize: proxy.size))
-            .onAppear { fit(layout: layout, in: proxy.size) }
+            .onAppear {
+                guard !viewportState.hasInitialFit else { return }
+                fit(layout: layout, in: proxy.size)
+            }
             .onChange(of: resetToken) { fit(layout: layout, in: proxy.size, animated: true) }
-            .onChange(of: proxy.size) { fit(layout: layout, in: proxy.size) }
+            .onChange(of: proxy.size) { oldSize, newSize in
+                viewportState.preserveCenter(from: oldSize, to: newSize)
+            }
         }
     }
 
@@ -173,26 +185,33 @@ private struct ThemeMapViewport: View {
         else { withAnimation(.spring(response: 0.34, dampingFraction: 0.86), update) }
     }
 
+    private func toggleCollapse(_ themeID: UUID) {
+        updateBranches {
+            if collapsedThemeIDs.contains(themeID) { collapsedThemeIDs.remove(themeID) }
+            else { collapsedThemeIDs.insert(themeID) }
+        }
+    }
+
     private func dragGesture(viewportSize: CGSize) -> some Gesture {
         DragGesture(minimumDistance: 2)
             .onChanged { value in
                 var transaction = Transaction()
                 transaction.animation = nil
                 withTransaction(transaction) {
-                    panOffset = CGSize(
-                        width: basePanOffset.width + value.translation.width,
-                        height: basePanOffset.height + value.translation.height
+                    viewportState.panOffset = CGSize(
+                        width: viewportState.basePanOffset.width + value.translation.width,
+                        height: viewportState.basePanOffset.height + value.translation.height
                     )
                 }
             }
             .onEnded { value in
                 let current = CGSize(
-                    width: basePanOffset.width + value.translation.width,
-                    height: basePanOffset.height + value.translation.height
+                    width: viewportState.basePanOffset.width + value.translation.width,
+                    height: viewportState.basePanOffset.height + value.translation.height
                 )
                 guard !reduceMotion else {
-                    panOffset = current
-                    basePanOffset = current
+                    viewportState.panOffset = current
+                    viewportState.basePanOffset = current
                     return
                 }
 
@@ -205,9 +224,9 @@ private struct ThemeMapViewport: View {
                     CGSize(width: current.width + momentum.width, height: current.height + momentum.height),
                     viewportSize: viewportSize
                 )
-                basePanOffset = target
+                viewportState.basePanOffset = target
                 withAnimation(.timingCurve(0.14, 0.72, 0.16, 1, duration: 0.48)) {
-                    panOffset = target
+                    viewportState.panOffset = target
                 }
             }
     }
@@ -215,33 +234,21 @@ private struct ThemeMapViewport: View {
     private func magnificationGesture(viewportSize: CGSize) -> some Gesture {
         MagnificationGesture()
             .onChanged { value in
-                let newZoom = min(max(baseZoom * value, 0.2), 2.2)
+                let newZoom = min(max(viewportState.baseZoom * value, 0.2), 2.2)
                 let center = CGPoint(x: viewportSize.width / 2, y: viewportSize.height / 2)
-                let contentX = (center.x - basePanOffset.width) / max(baseZoom, 0.01)
-                let contentY = (center.y - basePanOffset.height) / max(baseZoom, 0.01)
-                zoom = newZoom
-                panOffset = CGSize(width: center.x - contentX * newZoom, height: center.y - contentY * newZoom)
+                let contentX = (center.x - viewportState.basePanOffset.width) / max(viewportState.baseZoom, 0.01)
+                let contentY = (center.y - viewportState.basePanOffset.height) / max(viewportState.baseZoom, 0.01)
+                viewportState.zoom = newZoom
+                viewportState.panOffset = CGSize(width: center.x - contentX * newZoom, height: center.y - contentY * newZoom)
             }
             .onEnded { _ in
-                baseZoom = zoom
-                basePanOffset = panOffset
+                viewportState.baseZoom = viewportState.zoom
+                viewportState.basePanOffset = viewportState.panOffset
             }
     }
 
     private func fit(layout: ThemeLayout, in viewport: CGSize, animated: Bool = false) {
-        guard layout.size.width > 0, layout.size.height > 0 else { return }
-        let fitted = min((viewport.width - 70) / layout.size.width, (viewport.height - 70) / layout.size.height)
-        let targetZoom = min(max(fitted, 0.2), 1.15)
-        let targetOffset = CGSize(
-            width: (viewport.width - layout.size.width * targetZoom) / 2,
-            height: (viewport.height - layout.size.height * targetZoom) / 2
-        )
-        baseZoom = targetZoom
-        basePanOffset = targetOffset
-        let update = {
-            zoom = targetZoom
-            panOffset = targetOffset
-        }
+        let update = { viewportState.fit(layoutSize: layout.size, in: viewport) }
         if animated && !reduceMotion {
             withAnimation(.spring(response: 0.46, dampingFraction: 0.88), update)
         } else {
@@ -258,7 +265,7 @@ private struct ThemeMapViewport: View {
     }
 
     private func constrainedOffset(_ proposed: CGSize, viewportSize: CGSize) -> CGSize {
-        let contentSize = CGSize(width: layout.size.width * zoom, height: layout.size.height * zoom)
+        let contentSize = CGSize(width: layout.size.width * viewportState.zoom, height: layout.size.height * viewportState.zoom)
         let visibleMargin: CGFloat = 120
 
         func constrained(_ value: CGFloat, viewport: CGFloat, content: CGFloat) -> CGFloat {
@@ -273,6 +280,82 @@ private struct ThemeMapViewport: View {
         )
     }
 
+}
+
+private struct ThemeMapCanvas: View, Equatable {
+    let themes: [ThemeNode]
+    let layout: ThemeLayout
+    let query: String
+    let selectedThemeID: UUID?
+    let collapsedThemeIDs: Set<UUID>
+    let selectTheme: (UUID) -> Void
+    let toggleCollapse: (UUID) -> Void
+
+    nonisolated static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.layout == rhs.layout
+            && lhs.query == rhs.query
+            && lhs.selectedThemeID == rhs.selectedThemeID
+            && lhs.collapsedThemeIDs == rhs.collapsedThemeIDs
+            && lhs.themes.elementsEqual(rhs.themes) { left, right in
+                left.id == right.id
+                    && left.name == right.name
+                    && left.parentID == right.parentID
+                    && left.colorIndex == right.colorIndex
+            }
+    }
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            ForEach(layout.rootIDs, id: \.self) { rootID in
+                if let to = layout.positions[rootID] {
+                    ThemeConnector(from: layout.centerPosition, to: to, centerNode: true)
+                        .stroke(
+                            ThemePalette.color(layout.colorIndexes[rootID] ?? 0).opacity(0.68),
+                            style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                        )
+                        .transition(.opacity)
+                        .allowsHitTesting(false)
+                }
+            }
+            ForEach(layout.edges) { edge in
+                if let from = layout.positions[edge.parent], let to = layout.positions[edge.child] {
+                    ThemeConnector(from: from, to: to, centerNode: false)
+                        .stroke(
+                            ThemePalette.color(layout.colorIndexes[edge.child] ?? 0).opacity(0.68),
+                            style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                        )
+                        .transition(.opacity)
+                        .allowsHitTesting(false)
+                }
+            }
+
+            Text("Temalar")
+                .font(.headline)
+                .padding(.horizontal, 18).padding(.vertical, 10)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(.secondary.opacity(0.5)))
+                .position(x: layout.centerPosition.x + 70, y: layout.centerPosition.y + 24)
+
+            ForEach(themes) { theme in
+                if let position = layout.positions[theme.id] {
+                    ThemeMapNode(
+                        theme: theme,
+                        highlighted: !query.isEmpty && (
+                            theme.name.localizedCaseInsensitiveContains(query)
+                                || (layout.pathNames[theme.id] ?? "").localizedCaseInsensitiveContains(query)
+                        ),
+                        selected: selectedThemeID == theme.id,
+                        childCount: layout.childCounts[theme.id] ?? 0,
+                        collapsed: collapsedThemeIDs.contains(theme.id),
+                        select: { selectTheme(theme.id) },
+                        toggleCollapse: { toggleCollapse(theme.id) }
+                    )
+                    .position(x: position.x + 95, y: position.y + 24)
+                    .transition(.opacity.combined(with: .scale(scale: 0.94)))
+                }
+            }
+        }
+    }
 }
 
 private struct ThemeConnector: Shape {
@@ -336,25 +419,26 @@ private struct ThemeMapNode: View {
                 .contentShape(Rectangle())
                 .help(
                     collapsed
-                        ? "Expand \(childCount) subthemes"
-                        : AppLocalization.string("Collapse subthemes")
+                        ? (AppLocalization.language == .english ? "Expand \(childCount) subthemes" : "\(childCount) alt temayı aç")
+                        : AppLocalization.string("Alt temaları daralt")
                 )
-                .accessibilityLabel(collapsed ? "Expand subthemes" : "Collapse subthemes")
-                .accessibilityValue(collapsed ? "Collapsed" : "Expanded")
+                .accessibilityLabel(collapsed ? "Alt temaları aç" : "Alt temaları daralt")
+                .accessibilityValue(collapsed ? "Kapalı" : "Açık")
             }
         }
         .frame(width: 166).padding(.horizontal, 11).padding(.vertical, 8)
         .background(highlighted ? Color.yellow.opacity(0.35) : ThemePalette.color(theme.colorIndex).opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ThemePalette.color(theme.colorIndex), lineWidth: selected ? 3 : (theme.parentID == nil ? 2 : 1)))
         .shadow(color: .black.opacity(selected ? 0.14 : 0.05), radius: selected ? 6 : 3, y: 1)
-        .help("Show excerpts linked to this theme")
-        .accessibilityLabel("\(AppLocalization.string("Theme")): \(theme.name)")
+        .help("Bu temaya bağlı alıntıları göster")
+        .accessibilityLabel("\(AppLocalization.string("Tema")): \(theme.name)")
     }
 }
 
 private struct ThemeEvidenceInspector: View {
     @ObservedObject var store: AnalysisStore
     let themeID: UUID
+    let close: () -> Void
 
     private var evidence: [ThemeEvidence] {
         store.project.interviews.flatMap { interview in
@@ -376,22 +460,34 @@ private struct ThemeEvidenceInspector: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 5) {
-                Text(store.themeName(themeID)).font(.title3).fontWeight(.semibold)
-                Text(store.themePathName(for: themeID)).font(.caption).foregroundStyle(.secondary)
-            }.padding(16)
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(store.themeName(themeID)).font(.title3).fontWeight(.semibold)
+                    Text(store.themePathName(for: themeID)).font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 8)
+                Button(action: close) {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.plain)
+                .padding(6)
+                .contentShape(Rectangle())
+                .help("Tema ayrıntılarını kapat")
+                .accessibilityLabel("Tema ayrıntılarını kapat")
+            }
+            .padding(16)
             Divider()
 
             VStack(alignment: .leading, spacing: 7) {
                 HStack {
-                    Label("Theme Narrative", systemImage: "text.alignleft")
+                    Label("Tema anlatısı", systemImage: "text.alignleft")
                         .font(.callout).fontWeight(.semibold)
                     Spacer()
-                    Text("Saved automatically").font(.caption2).foregroundStyle(.tertiary)
+                    Text("Otomatik kaydedilir").font(.caption2).foregroundStyle(.tertiary)
                 }
                 ZStack(alignment: .topLeading) {
                     if store.themeNote(themeID).isEmpty {
-                        Text("Describe what this theme covers, its boundaries, and analytical meaning…")
+                        Text("Bu temanın neyi kapsadığını, sınırlarını ve analitik anlamını açıklayın…")
                             .font(.callout).foregroundStyle(.tertiary)
                             .padding(.horizontal, 6).padding(.vertical, 8)
                             .allowsHitTesting(false)
@@ -411,7 +507,7 @@ private struct ThemeEvidenceInspector: View {
             .padding(14)
 
             HStack {
-                Label("Linked Excerpts", systemImage: "text.quote")
+                Label("Bağlı alıntılar", systemImage: "text.quote")
                     .font(.callout).fontWeight(.semibold)
                 Spacer()
                 Text(evidence.count.formatted()).font(.caption).foregroundStyle(.secondary)
@@ -421,9 +517,9 @@ private struct ThemeEvidenceInspector: View {
             Divider()
             if evidence.isEmpty {
                 ContentUnavailableView(
-                    "No linked excerpts",
+                    "Bağlı alıntı yok",
                     systemImage: "text.quote",
-                    description: Text("This theme and its subthemes have not been assigned to any excerpt yet.")
+                    description: Text("Bu tema veya alt temaları henüz bir ifadeye atanmamış.")
                 )
             } else {
                 ScrollView {
@@ -455,12 +551,12 @@ private struct ThemeEvidenceInspector: View {
                                                 )
                                             }
                                         }
-                                    } label: { Label("Change Theme", systemImage: "arrow.triangle.2.circlepath") }
+                                    } label: { Label("Temayı Değiştir", systemImage: "arrow.triangle.2.circlepath") }
                                     .controlSize(.small)
                                     Spacer()
                                     Button(role: .destructive) {
                                         store.removeThemeAssignments(unitID: item.id, interviewID: item.interviewID, matching: themeID)
-                                    } label: { Label("Remove Assignment", systemImage: "trash") }
+                                    } label: { Label("Atamayı Kaldır", systemImage: "trash") }
                                     .controlSize(.small)
                                 }
                             }
@@ -492,8 +588,8 @@ private struct ThemeEvidence: Identifiable {
     let assignedPaths: [String]
 }
 
-private struct ThemeLayout {
-    struct Edge: Identifiable {
+private struct ThemeLayout: Equatable {
+    struct Edge: Identifiable, Equatable {
         let parent: UUID
         let child: UUID
         var id: UUID { child }
@@ -501,11 +597,36 @@ private struct ThemeLayout {
     var positions: [UUID: CGPoint] = [:]
     var edges: [Edge] = []
     var rootIDs: [UUID] = []
+    var childCounts: [UUID: Int] = [:]
+    var colorIndexes: [UUID: Int] = [:]
+    var pathNames: [UUID: String] = [:]
     var centerPosition: CGPoint = .zero
     var size = CGSize(width: 900, height: 600)
 
     init(themes: [ThemeNode], collapsed: Set<UUID>) {
         let grouped = Dictionary(grouping: themes, by: \.parentID)
+        let themesByID = Dictionary(uniqueKeysWithValues: themes.map { ($0.id, $0) })
+        childCounts = Dictionary(uniqueKeysWithValues: themes.map { ($0.id, grouped[$0.id]?.count ?? 0) })
+        colorIndexes = Dictionary(uniqueKeysWithValues: themes.map { ($0.id, $0.colorIndex) })
+
+        func pathName(for theme: ThemeNode, visiting: inout Set<UUID>) -> String {
+            if let cached = pathNames[theme.id] { return cached }
+            guard visiting.insert(theme.id).inserted else { return theme.name }
+            defer { visiting.remove(theme.id) }
+            let result: String
+            if let parentID = theme.parentID, let parent = themesByID[parentID] {
+                result = pathName(for: parent, visiting: &visiting) + " › " + theme.name
+            } else {
+                result = theme.name
+            }
+            pathNames[theme.id] = result
+            return result
+        }
+        for theme in themes {
+            var visiting: Set<UUID> = []
+            _ = pathName(for: theme, visiting: &visiting)
+        }
+
         let roots = (grouped[nil] ?? []).sorted { $0.name < $1.name }
         rootIDs = roots.map(\.id)
         let leftRoots = roots.enumerated().compactMap { $0.offset.isMultiple(of: 2) ? $0.element : nil }

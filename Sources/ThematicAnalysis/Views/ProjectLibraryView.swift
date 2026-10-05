@@ -62,9 +62,9 @@ private struct ProjectWelcomeView: View {
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 7) {
-                    Text("Thematic Analysis")
+                    Text("Tematik Analiz")
                         .font(.system(size: 29, weight: .semibold))
-                    Text("Organize and code interviews, then explore relationships between themes.")
+                    Text("Görüşmeleri düzenleyin, kodlayın ve temalar arasındaki ilişkileri keşfedin.")
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -76,7 +76,7 @@ private struct ProjectWelcomeView: View {
                 Button {
                     library.isCreatingProject = true
                 } label: {
-                    Label("New Project", systemImage: "plus")
+                    Label("Yeni Proje", systemImage: "plus")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -86,19 +86,18 @@ private struct ProjectWelcomeView: View {
                 Button {
                     showImporter = true
                 } label: {
-                    Label("Open Project Backup…", systemImage: "folder")
+                    Label("Proje Yedeği Aç…", systemImage: "folder")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
-
             }
             .padding(.top, 34)
 
             Spacer(minLength: 32)
 
             SettingsLink {
-                Label("Settings", systemImage: "gearshape")
+                Label("Ayarlar", systemImage: "gearshape")
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
@@ -114,14 +113,14 @@ private struct ProjectWelcomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("Projects")
+                    Text("Projeler")
                         .font(.system(size: 27, weight: .semibold))
                     Spacer()
-                    Text(library.projects.count.formatted()) + Text(" project(s)")
+                    Text(library.projects.count.formatted()) + Text(" proje")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                Text("Recent projects")
+                Text("Son çalışmalarınız")
                     .font(.body)
                     .foregroundStyle(.secondary)
             }
@@ -129,9 +128,9 @@ private struct ProjectWelcomeView: View {
 
             if library.sortedProjects.isEmpty {
                 ContentUnavailableView(
-                    "No projects yet",
+                    "Henüz proje yok",
                     systemImage: "rectangle.stack.badge.plus",
-                    description: Text("Create your first thematic analysis project.")
+                    description: Text("İlk tematik analiz projenizi oluşturun.")
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -178,8 +177,8 @@ private struct ProjectLibraryRow: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                     Group {
-                        Text((project.participantCount ?? 0).formatted()) + Text(" participant(s) · ")
-                        + Text((project.codingUnitCount ?? 0).formatted()) + Text(" coding item(s)")
+                        Text((project.participantCount ?? 0).formatted()) + Text(" katılımcı · ")
+                        + Text((project.codingUnitCount ?? 0).formatted()) + Text(" kodlama")
                     }
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -188,7 +187,7 @@ private struct ProjectLibraryRow: View {
                 Spacer(minLength: 24)
 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text("Last edited")
+                    Text("Son düzenleme")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                     Text(project.updatedAt, format: .dateTime.day().month(.abbreviated).year().hour().minute())
@@ -231,26 +230,26 @@ private struct NewProjectView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("New Thematic Analysis Project")
+                Text("Yeni Tematik Analiz Projesi")
                     .font(.title2)
                     .fontWeight(.semibold)
-                Text("Participants, transcripts, themes, and coding are stored together in this project.")
+                Text("Katılımcılar, transkriptler, temalar ve kodlamalar bu projede birlikte saklanır.")
                     .foregroundStyle(.secondary)
             }
 
             VStack(alignment: .leading, spacing: 7) {
-                Text("Project name")
+                Text("Proje adı")
                     .font(.callout)
                     .fontWeight(.medium)
-                TextField("e.g. AI Interviews", text: $name)
+                TextField("Örn. Yapay Zekâ Görüşmeleri", text: $name)
                     .textFieldStyle(.roundedBorder)
             }
 
             HStack {
-                Button("Cancel") { dismiss() }
+                Button("Vazgeç") { dismiss() }
                     .keyboardShortcut(.cancelAction)
                 Spacer()
-                Button("Create Project") {
+                Button("Proje Oluştur") {
                     if library.createProject(named: name) { dismiss() }
                 }
                 .buttonStyle(.borderedProminent)

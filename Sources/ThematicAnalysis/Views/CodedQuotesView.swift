@@ -50,21 +50,21 @@ struct CodedQuotesView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Coded Excerpts").font(.title2).fontWeight(.semibold)
+                    Text("Kodlanmış Alıntılar").font(.title2).fontWeight(.semibold)
                     if hasActiveFilters {
-                        (Text(entries.count.formatted()) + Text(" / ") + Text(allEntries.count.formatted()) + Text(" results shown"))
+                        (Text(entries.count.formatted()) + Text(" / ") + Text(allEntries.count.formatted()) + Text(" sonuç gösteriliyor"))
                             .foregroundStyle(.secondary)
                     } else {
-                        (Text(allEntries.count.formatted()) + Text(" coded excerpt(s)"))
+                        (Text(allEntries.count.formatted()) + Text(" kodlanmış alıntı"))
                             .foregroundStyle(.secondary)
                     }
                 }
                 Spacer()
                 Menu {
-                    Button("Filtered Table (CSV)") { exportFiltered() }
-                    Button("Full Project Archive (ZIP)") { exportProject() }
+                    Button("Filtrelenmiş Tablo (CSV)") { exportFiltered() }
+                    Button("Tüm Proje Arşivi (ZIP)") { exportProject() }
                 } label: {
-                    Label("Export", systemImage: "square.and.arrow.up")
+                    Label("Dışa Aktar", systemImage: "square.and.arrow.up")
                 }
                 .buttonStyle(.borderedProminent)
             }.padding(16)
@@ -73,7 +73,7 @@ struct CodedQuotesView: View {
             Divider()
 
             Table(entries) {
-                TableColumn("Participant") { entry in
+                TableColumn("Katılımcı") { entry in
                     HStack(spacing: 7) {
                         Circle()
                             .fill(ParticipantPalette.color(ParticipantPalette.index(for: entry.interview.id, in: store.project.interviews)))
@@ -84,12 +84,12 @@ struct CodedQuotesView: View {
                         }
                     }
                 }.width(min: 110, ideal: 150)
-                TableColumn("Time") { entry in Text(entry.time).monospacedDigit() }
+                TableColumn("Zaman") { entry in Text(entry.time).monospacedDigit() }
                     .width(min: 80, ideal: 100)
-                TableColumn("Excerpt") { entry in
+                TableColumn("Alıntı") { entry in
                     Text(entry.text).lineLimit(4).textSelection(.enabled)
                 }.width(min: 280, ideal: 480)
-                TableColumn("Theme Path") { entry in
+                TableColumn("Tema yolu") { entry in
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(entry.themePaths, id: \.self) { path in
                             Text(path).font(.caption).lineLimit(2)
@@ -98,21 +98,21 @@ struct CodedQuotesView: View {
                         }
                     }
                 }.width(min: 190, ideal: 280)
-                TableColumn("Note") { entry in Text(entry.unit.memo).lineLimit(3).foregroundStyle(.secondary) }
+                TableColumn("Not") { entry in Text(entry.unit.memo).lineLimit(3).foregroundStyle(.secondary) }
                     .width(min: 120, ideal: 180)
                 TableColumn("") { entry in
                     Button(role: .destructive) {
                         store.removeCodingUnit(entry.unit.id, interviewID: entry.interview.id)
                     } label: { Image(systemName: "trash") }
-                    .buttonStyle(.plain).help("Remove coding")
+                    .buttonStyle(.plain).help("Kodlamayı kaldır")
                 }.width(28)
             }
             .overlay {
                 if entries.isEmpty {
                     ContentUnavailableView(
-                        "No matching excerpts",
+                        "Eşleşen alıntı yok",
                         systemImage: "line.3.horizontal.decrease.circle",
-                        description: Text("Clear the filters or create a new coding.")
+                        description: Text("Filtreleri temizleyin veya yeni bir kodlama oluşturun.")
                     )
                 }
             }
@@ -122,16 +122,16 @@ struct CodedQuotesView: View {
     private var filterBar: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack(spacing: 10) {
-                Label("Filters", systemImage: "line.3.horizontal.decrease")
+                Label("Filtreler", systemImage: "line.3.horizontal.decrease")
                     .font(.callout).fontWeight(.semibold)
                 HStack(spacing: 7) {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                    TextField("Search excerpt, speaker, theme, or note", text: $query)
+                    TextField("Alıntı, konuşmacı, tema veya not ara", text: $query)
                         .textFieldStyle(.plain)
                     if !query.isEmpty {
                         Button { query = "" } label: { Image(systemName: "xmark.circle.fill") }
                             .buttonStyle(.plain).foregroundStyle(.secondary)
-                            .accessibilityLabel("Clear search")
+                            .accessibilityLabel("Aramayı temizle")
                     }
                 }
                 .padding(.horizontal, 9).frame(minWidth: 280, maxWidth: 520, minHeight: 30)
@@ -139,38 +139,38 @@ struct CodedQuotesView: View {
                 .overlay(RoundedRectangle(cornerRadius: 7).stroke(.separator))
                 Spacer()
                 if hasActiveFilters {
-                    Button("Clear All", systemImage: "xmark.circle") { clearFilters() }
+                    Button("Tümünü Temizle", systemImage: "xmark.circle") { clearFilters() }
                         .controlSize(.small)
                 }
             }
 
             HStack(spacing: 10) {
-                Picker("Participant", selection: $participantFilter) {
-                    Text("All participants").tag(Optional<UUID>.none)
+                Picker("Katılımcı", selection: $participantFilter) {
+                    Text("Tüm katılımcılar").tag(Optional<UUID>.none)
                     ForEach(store.project.interviews) { Text($0.participant).tag(Optional($0.id)) }
                 }
                 .frame(width: 220)
 
-                Picker("Speaker", selection: $speakerFilter) {
-                    Text("All speakers").tag(Optional<String>.none)
+                Picker("Konuşmacı", selection: $speakerFilter) {
+                    Text("Tüm konuşmacılar").tag(Optional<String>.none)
                     ForEach(availableSpeakers, id: \.self) { Text($0).tag(Optional($0)) }
                 }
                 .frame(width: 220)
 
                 ThemeHierarchyPickerButton(
                     store: store,
-                    title: selectedThemeFilter.map { store.themeName($0) } ?? AppLocalization.string("Choose Theme…"),
+                    title: selectedThemeFilter.map { store.themeName($0) } ?? AppLocalization.string("Tema Seç…"),
                     prominent: false
                 ) { selectedThemeFilter = $0 }
 
-                Toggle("Include subthemes", isOn: $includeDescendants)
+                Toggle("Alt temalar dahil", isOn: $includeDescendants)
                     .toggleStyle(.checkbox)
                     .disabled(selectedThemeFilter == nil)
 
                 if selectedThemeFilter != nil {
-                    Button { selectedThemeFilter = nil } label: { Label("Remove theme filter", systemImage: "xmark") }
+                    Button { selectedThemeFilter = nil } label: { Label("Tema filtresini kaldır", systemImage: "xmark") }
                         .labelStyle(.iconOnly).buttonStyle(.borderless)
-                        .help("Remove theme filter")
+                        .help("Tema filtresini kaldır")
                 }
                 Spacer()
             }
@@ -178,7 +178,7 @@ struct CodedQuotesView: View {
             if hasActiveFilters {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 7) {
-                        Text("Active").font(.caption).foregroundStyle(.secondary)
+                        Text("Etkin").font(.caption).foregroundStyle(.secondary)
                         if let participantFilter,
                            let interview = store.project.interviews.first(where: { $0.id == participantFilter }) {
                             FilterToken(title: interview.participant, symbol: "person", remove: { self.participantFilter = nil })
@@ -220,14 +220,14 @@ struct CodedQuotesView: View {
                     memo: $0.unit.memo
                 )
             }
-            if let url = try ExportService.exportQuotes(rows) { store.lastMessage = "Table exported: \(url.lastPathComponent)" }
-        } catch { store.lastMessage = "Export failed: \(error.localizedDescription)" }
+            if let url = try ExportService.exportQuotes(rows) { store.lastMessage = "Tablo dışa aktarıldı: \(url.lastPathComponent)" }
+        } catch { store.lastMessage = "Dışa aktarma hatası: \(error.localizedDescription)" }
     }
 
     private func exportProject() {
         do {
-            if let url = try ExportService.exportProjectArchive(store: store) { store.lastMessage = "Project archive created: \(url.lastPathComponent)" }
-        } catch { store.lastMessage = "Could not create archive: \(error.localizedDescription)" }
+            if let url = try ExportService.exportProjectArchive(store: store) { store.lastMessage = "Proje arşivi oluşturuldu: \(url.lastPathComponent)" }
+        } catch { store.lastMessage = "Arşiv oluşturulamadı: \(error.localizedDescription)" }
     }
 
     private static func timeRange(_ segments: [TranscriptSegment]) -> String {
@@ -248,7 +248,7 @@ private struct FilterToken: View {
             Text(title).lineLimit(1)
             Button(action: remove) { Image(systemName: "xmark.circle.fill") }
                 .buttonStyle(.plain)
-                .accessibilityLabel("\(AppLocalization.string("Remove filter")): \(title)")
+                .accessibilityLabel("\(AppLocalization.string("Filtreyi kaldır")): \(title)")
         }
         .font(.caption)
         .padding(.horizontal, 8).padding(.vertical, 4)

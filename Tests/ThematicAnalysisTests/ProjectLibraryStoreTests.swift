@@ -16,7 +16,7 @@ final class ProjectLibraryStoreTests: XCTestCase {
             updatedAt: Date(timeIntervalSince1970: 1_700_000_000)
         )
         let legacyURL = root.appendingPathComponent("active-project.json")
-        try JSONEncoder.thematic.encode(legacy).write(to: legacyURL, options: .atomic)
+        try JSONEncoder.tematik.encode(legacy).write(to: legacyURL, options: .atomic)
 
         let firstLaunch = ProjectLibraryStore(storageRoot: root, includeDemoProject: false)
         XCTAssertEqual(firstLaunch.projects.count, 1)

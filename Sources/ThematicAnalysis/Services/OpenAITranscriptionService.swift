@@ -1,4 +1,5 @@
 import Foundation
+import Security
 
 enum OpenAITranscriptionError: LocalizedError, Equatable {
     case missingAPIKey
@@ -11,17 +12,23 @@ enum OpenAITranscriptionError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .missingAPIKey:
-            AppLocalization.string("No OpenAI API key was entered.")
+            AppLocalization.string("OpenAI API anahtarı girilmedi.")
         case let .unsupportedFileType(fileExtension):
-            "\(fileExtension.uppercased()) is not supported. Choose MP3, MP4, MPEG, MPGA, M4A, WAV, or WEBM."
+            AppLocalization.language == .english
+                ? "\(fileExtension.uppercased()) is not supported. Choose MP3, MP4, MPEG, MPGA, M4A, WAV, or WEBM."
+                : "\(fileExtension.uppercased()) biçimi desteklenmiyor. MP3, MP4, MPEG, MPGA, M4A, WAV veya WEBM seçin."
         case let .fileTooLarge(bytes):
-            "The audio file is \(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)). The OpenAI transcription file limit is 25 MB."
+            AppLocalization.language == .english
+                ? "The audio file is \(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)). The OpenAI transcription file limit is 25 MB."
+                : "Ses dosyası \(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)). OpenAI dosya transkripsiyonu için üst sınır 25 MB."
         case .unreadableFile:
-            AppLocalization.string("The audio file could not be read. Make sure it is still accessible.")
+            AppLocalization.string("Ses dosyası okunamadı. Dosyanın hâlâ erişilebilir olduğundan emin olun.")
         case .invalidResponse:
-            AppLocalization.string("OpenAI did not return a valid transcript response.")
+            AppLocalization.string("OpenAI geçerli bir transkript yanıtı döndürmedi.")
         case let .api(statusCode, message):
-            "OpenAI request failed (HTTP \(statusCode)): \(message)"
+            AppLocalization.language == .english
+                ? "OpenAI request failed (HTTP \(statusCode)): \(message)"
+                : "OpenAI isteği başarısız (HTTP \(statusCode)): \(message)"
         }
     }
 }
@@ -68,7 +75,7 @@ enum OpenAITranscriptionService {
 
         let fileExtension = audioURL.pathExtension.lowercased()
         guard supportedExtensions.contains(fileExtension) else {
-            throw OpenAITranscriptionError.unsupportedFileType(fileExtension.isEmpty ? "file" : fileExtension)
+            throw OpenAITranscriptionError.unsupportedFileType(fileExtension.isEmpty ? "dosya" : fileExtension)
         }
 
         let didAccess = audioURL.startAccessingSecurityScopedResource()
@@ -102,7 +109,7 @@ enum OpenAITranscriptionService {
         guard (200..<300).contains(http.statusCode) else {
             let message = (try? JSONDecoder().decode(ErrorEnvelope.self, from: data).error.message)
                 ?? String(data: data, encoding: .utf8)
-                ?? "Unknown API error"
+                ?? "Bilinmeyen API hatası"
             throw OpenAITranscriptionError.api(statusCode: http.statusCode, message: message)
         }
         let segments = try decodeDiarizedResponse(data)
@@ -164,10 +171,28 @@ struct MultipartFormData {
 }
 
 enum OpenAIAPIKeyStore {
-    private static let key = "openAIAPIKey"
+    private static let legacyKey = "openAIAPIKey"
+    private static let service = "com.umutkarlikli.ThematicAnalysis.openai"
+    private static let account = "OpenAIAPIKey"
 
     static func load() -> String {
-        UserDefaults.standard.string(forKey: key) ?? ""
+        var query: [String: Any] = baseQuery
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var result: CFTypeRef?
+        if SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+           let data = result as? Data,
+           let key = String(data: data, encoding: .utf8), !key.isEmpty {
+            return key
+        }
+
+        // Preserve existing installations: migrate the former UserDefaults
+        // value into Keychain the first time the updated app reads it.
+        let legacy = UserDefaults.standard.string(forKey: legacyKey)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !legacy.isEmpty else { return "" }
+        try? save(legacy)
+        UserDefaults.standard.removeObject(forKey: legacyKey)
+        return legacy
     }
 
     static func save(_ apiKey: String) throws {
@@ -176,11 +201,38 @@ enum OpenAIAPIKeyStore {
             delete()
             return
         }
-        UserDefaults.standard.set(cleanKey, forKey: key)
+        let data = Data(cleanKey.utf8)
+        let updateStatus = SecItemUpdate(baseQuery as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+        if updateStatus == errSecItemNotFound {
+            var item = baseQuery
+            item[kSecValueData as String] = data
+            let addStatus = SecItemAdd(item as CFDictionary, nil)
+            guard addStatus == errSecSuccess else { throw keychainError(addStatus) }
+        } else if updateStatus != errSecSuccess {
+            throw keychainError(updateStatus)
+        }
+        UserDefaults.standard.removeObject(forKey: legacyKey)
     }
 
     static func delete() {
-        UserDefaults.standard.removeObject(forKey: key)
+        SecItemDelete(baseQuery as CFDictionary)
+        UserDefaults.standard.removeObject(forKey: legacyKey)
+    }
+
+    private static var baseQuery: [String: Any] {
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+    }
+
+    private static func keychainError(_ status: OSStatus) -> NSError {
+        NSError(
+            domain: NSOSStatusErrorDomain,
+            code: Int(status),
+            userInfo: [NSLocalizedDescriptionKey: SecCopyErrorMessageString(status, nil) as String? ?? "Keychain hatası"]
+        )
     }
 }
 

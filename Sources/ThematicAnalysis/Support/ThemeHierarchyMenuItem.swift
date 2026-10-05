@@ -11,7 +11,7 @@ struct ThemeHierarchyMenuItem: View {
             Button(node.name) { choose(node.id) }
         } else {
             Menu(node.name) {
-                Button("Choose this theme") { choose(node.id) }
+                Button("Bu temayı seç") { choose(node.id) }
                 Divider()
                 ForEach(children) { child in
                     ThemeHierarchyMenuItem(node: child, store: store, choose: choose)
@@ -43,7 +43,7 @@ struct ThemeHierarchyPickerButton: View {
             }
             .frame(minWidth: 440, idealWidth: 500, minHeight: 520, idealHeight: 620)
         }
-        .accessibilityHint("Opens the full theme hierarchy")
+        .accessibilityHint("Tüm tema hiyerarşisini açar")
     }
 
     private var pickerButton: some View {
@@ -82,19 +82,19 @@ private struct ThemeHierarchyBrowser: View {
         VStack(spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Choose Theme").font(.headline)
-                    Text(store.project.themes.count.formatted()) + Text(" themes · full hierarchy")
+                    Text("Tema Seç").font(.headline)
+                    Text(store.project.themes.count.formatted()) + Text(" tema · tüm hiyerarşi")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Expand All") { withAnimation(.easeInOut(duration: 0.2)) { expandedThemeIDs = branchIDs } }
+                Button("Tümünü Aç") { withAnimation(.easeInOut(duration: 0.2)) { expandedThemeIDs = branchIDs } }
                     .disabled(expandedThemeIDs == branchIDs)
-                Button("Collapse") { withAnimation(.easeInOut(duration: 0.2)) { expandedThemeIDs.removeAll() } }
+                Button("Daralt") { withAnimation(.easeInOut(duration: 0.2)) { expandedThemeIDs.removeAll() } }
                     .disabled(expandedThemeIDs.isEmpty)
             }
             .padding(14)
 
-            TextField("Search theme name or path", text: $query)
+            TextField("Tema adında veya yolunda ara", text: $query)
                 .textFieldStyle(.roundedBorder)
                 .padding(.horizontal, 14).padding(.bottom, 10)
 
@@ -165,7 +165,7 @@ private struct ThemeHierarchyBrowserRow: View {
                             .frame(width: 22, height: 22)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(AppLocalization.string(isExpanded ? "Collapse subthemes" : "Expand subthemes"))
+                    .accessibilityLabel(AppLocalization.string(isExpanded ? "Alt temaları daralt" : "Alt temaları aç"))
                 }
 
                 Button { choose(node.id) } label: {

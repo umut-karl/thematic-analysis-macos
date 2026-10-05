@@ -51,7 +51,7 @@ struct DebugExcerptCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 7) {
                 Circle().fill(participantColor).frame(width: 8, height: 8)
-                Text(participant?.name ?? "Unknown participant").fontWeight(.semibold)
+                Text(participant?.name ?? "Bilinmeyen katılımcı").fontWeight(.semibold)
                 if let role = participant?.role {
                     Text(role).foregroundStyle(.secondary)
                 }

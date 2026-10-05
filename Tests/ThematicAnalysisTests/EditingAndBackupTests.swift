@@ -81,7 +81,7 @@ final class EditingAndBackupTests: XCTestCase {
         let store = AnalysisStore(storageRoot: root.appendingPathComponent("store"))
         let bundle = root.appendingPathComponent("Backup", isDirectory: true)
         try FileManager.default.createDirectory(at: bundle, withIntermediateDirectories: true)
-        try JSONEncoder.thematic.encode(store.project).write(to: bundle.appendingPathComponent("Project-Data.json"))
+        try JSONEncoder.tematik.encode(store.project).write(to: bundle.appendingPathComponent("Project-Data.json"))
         let archive = root.appendingPathComponent("project.zip")
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")

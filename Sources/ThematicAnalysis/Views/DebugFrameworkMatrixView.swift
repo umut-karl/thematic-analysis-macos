@@ -91,19 +91,19 @@ struct DebugFrameworkMatrixView: View {
                 isPresented: $isInspectorPresented
             )
         } else {
-            ContentUnavailableView("No cell selected", systemImage: "tablecells")
+            ContentUnavailableView("Hücre seçilmedi", systemImage: "tablecells")
         }
     }
 
     private var controls: some View {
         HStack(spacing: 8) {
-            Picker("View", selection: $displayMode) {
+            Picker("Görünüm", selection: $displayMode) {
                 ForEach(FrameworkDisplayMode.allCases) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
             }
             .pickerStyle(.segmented)
             .labelsHidden()
             .frame(width: 176)
-            .accessibilityLabel("Matrix view")
+            .accessibilityLabel("Matris görünümü")
 
             Divider().frame(height: 20)
             participantMenu
@@ -116,17 +116,17 @@ struct DebugFrameworkMatrixView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
-                .help("Number of visible participants and columns")
+                .help("Görünen katılımcı ve sütun sayısı")
 
             Button {
                 isInspectorPresented.toggle()
             } label: {
-                Label("Details", systemImage: "sidebar.trailing")
+                Label("Ayrıntılar", systemImage: "sidebar.trailing")
             }
             .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
-            .help(isInspectorPresented ? "Hide details" : "Show details")
-            .accessibilityLabel(isInspectorPresented ? "Hide details" : "Show details")
+            .help(isInspectorPresented ? "Ayrıntıları gizle" : "Ayrıntıları göster")
+            .accessibilityLabel(isInspectorPresented ? "Ayrıntıları gizle" : "Ayrıntıları göster")
         }
         .controlSize(.small)
         .padding(.horizontal, 12)
@@ -139,7 +139,7 @@ struct DebugFrameworkMatrixView: View {
             Button {
                 usageGroup = nil
             } label: {
-                Label("All participants", systemImage: usageGroup == nil ? "checkmark" : "person.2")
+                Label("Tüm katılımcılar", systemImage: usageGroup == nil ? "checkmark" : "person.2")
             }
             Divider()
             ForEach(usageGroups, id: \.self) { group in
@@ -150,10 +150,10 @@ struct DebugFrameworkMatrixView: View {
                 }
             }
         } label: {
-            Label(usageGroup ?? "All participants", systemImage: "person.2")
+            Label(usageGroup ?? "Tüm katılımcılar", systemImage: "person.2")
                 .lineLimit(1)
         }
-        .help("Filter participant group")
+        .help("Katılımcı grubunu filtrele")
     }
 
     private var sortMenu: some View {
@@ -172,14 +172,14 @@ struct DebugFrameworkMatrixView: View {
                 Image(systemName: "arrow.up.arrow.down")
             }
         }
-        .help("Sort participants")
+        .help("Katılımcıları sırala")
     }
 
     private var columnsButton: some View {
         Button {
             isColumnPickerPresented.toggle()
         } label: {
-            Label("Columns (\(visibleColumns.count))", systemImage: "rectangle.split.3x1")
+            Label("Sütunlar (\(visibleColumns.count))", systemImage: "rectangle.split.3x1")
         }
         .popover(isPresented: $isColumnPickerPresented, arrowEdge: .bottom) {
             FrameworkColumnPicker(
@@ -187,7 +187,7 @@ struct DebugFrameworkMatrixView: View {
                 isPresented: $isColumnPickerPresented
             )
         }
-        .help("Add and manage columns")
+        .help("Sütun ekle ve yönet")
     }
 
     private var matrix: some View {
@@ -248,7 +248,7 @@ struct DebugFrameworkMatrixView: View {
 
     private var matrixHeader: some View {
         HStack(spacing: 0) {
-            Text("Participant")
+            Text("Katılımcı")
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
@@ -361,15 +361,15 @@ struct DebugFrameworkMatrixView: View {
 }
 
 private enum FrameworkDisplayMode: String, CaseIterable, Identifiable {
-    case visual = "Density"
-    case summary = "Summary"
+    case visual = "Yoğunluk"
+    case summary = "Özet"
     var id: String { rawValue }
 }
 
 private enum FrameworkCaseSort: String, CaseIterable, Identifiable {
-    case sourceOrder = "Source Order"
-    case evidenceDensity = "Evidence Density"
-    case pattern = "Pattern Similarity"
+    case sourceOrder = "Kaynak sırası"
+    case evidenceDensity = "Kanıt yoğunluğu"
+    case pattern = "Örüntü benzerliği"
     var id: String { rawValue }
 }
 
@@ -389,7 +389,7 @@ private struct FrameworkSummaryCell: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 5) {
                 if summary.isEmpty {
-                    Text("Add summary…")
+                    Text("Özet ekle…")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(4)
@@ -421,9 +421,9 @@ private struct FrameworkSummaryCell: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("Open summary and evidence")
+        .help("Özeti ve kanıtları aç")
         .accessibilityLabel(
-            "\(summary.isEmpty ? "No summary" : summary), \(evidenceCount) excerpts"
+            "\(summary.isEmpty ? AppLocalization.string("Özet yok") : summary), \(AppLocalization.string("\(evidenceCount) alıntı"))"
         )
     }
 }
@@ -461,8 +461,8 @@ private struct FrameworkVisualCell: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("\(summary.isEmpty ? "No summary" : summary) · \(evidenceCount) excerpts")
-        .accessibilityLabel("\(summary.isEmpty ? "No summary" : summary), \(evidenceCount) excerpts")
+        .help("\(summary.isEmpty ? AppLocalization.string("Özet yok") : summary) · \(AppLocalization.string("\(evidenceCount) alıntı"))")
+        .accessibilityLabel("\(summary.isEmpty ? AppLocalization.string("Özet yok") : summary), \(AppLocalization.string("\(evidenceCount) alıntı"))")
     }
 }
 
@@ -487,29 +487,29 @@ private struct FrameworkColumnPicker: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Columns").font(.headline)
+                Text("Sütunlar").font(.headline)
                 Spacer()
                 Text("\(workspace.visibleColumnIDs.count)/\(workspace.columns.count)")
                     .font(.caption).foregroundStyle(.secondary).monospacedDigit()
                 Button { isPresented = false } label: { Image(systemName: "xmark") }
                     .buttonStyle(.borderless)
-                    .help("Close")
+                    .help("Kapat")
             }
             .padding(12)
 
             HStack(spacing: 6) {
-                TextField("New column", text: $newColumnName)
+                TextField("Yeni sütun", text: $newColumnName)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit(addColumn)
                 Button(action: addColumn) {
-                    Label("Add", systemImage: "plus")
+                    Label("Ekle", systemImage: "plus")
                 }
                 .disabled(!canAddColumn)
             }
             .padding(.horizontal, 12)
             .padding(.bottom, 8)
 
-            TextField("Search themes or codes", text: $query)
+            TextField("Tema veya kod ara", text: $query)
                 .textFieldStyle(.roundedBorder)
                 .padding(.horizontal, 12)
                 .padding(.bottom, 10)
@@ -532,12 +532,12 @@ private struct FrameworkColumnPicker: View {
             Divider()
 
             HStack {
-                Button("Show All") {
+                Button("Tümünü Göster") {
                     workspace.visibleColumnIDs = Set(workspace.columns.map(\.id))
                 }
                 .disabled(workspace.visibleColumnIDs.count == workspace.columns.count)
                 Spacer()
-                Button("Done") { isPresented = false }
+                Button("Bitti") { isPresented = false }
                     .keyboardShortcut(.defaultAction)
             }
             .padding(12)
@@ -559,7 +559,7 @@ private struct FrameworkColumnPicker: View {
                 .frame(width: 7, height: 7)
 
             if column.isCustom {
-                TextField("Column name", text: titleBinding(for: column.id))
+                TextField("Sütun adı", text: titleBinding(for: column.id))
                     .textFieldStyle(.plain)
             } else {
                 Text(column.title).lineLimit(1)
@@ -577,7 +577,7 @@ private struct FrameworkColumnPicker: View {
                     Image(systemName: "trash")
                 }
                 .buttonStyle(.borderless)
-                .help("Delete column")
+                .help("Sütunu sil")
             }
         }
         .padding(.horizontal, 12)
@@ -644,7 +644,7 @@ private struct FrameworkEvidenceInspector: View {
                 Spacer()
                 Button { isPresented = false } label: { Image(systemName: "xmark") }
                     .buttonStyle(.borderless)
-                    .help("Close details")
+                    .help("Ayrıntıları kapat")
             }
             .padding(12)
 
@@ -652,16 +652,16 @@ private struct FrameworkEvidenceInspector: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Summary")
+                    Text("Özet")
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
 
-                    TextField("Write this participant's theme summary", text: $summary, axis: .vertical)
+                    TextField("Bu katılımcının tema özetini yazın", text: $summary, axis: .vertical)
                         .textFieldStyle(.roundedBorder)
                         .lineLimit(4...9)
 
-                    Picker("Evidence", selection: $scope) {
+                    Picker("Kanıt", selection: $scope) {
                         ForEach(FrameworkEvidenceScope.allCases) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
                     }
                     .pickerStyle(.segmented)
@@ -683,7 +683,7 @@ private struct FrameworkEvidenceInspector: View {
                                     toggleSummaryLink(excerpt.id)
                                 } label: {
                                     Label(
-                                        linkedExcerptIDs.contains(excerpt.id) ? "Unlink" : "Link to Summary",
+                                        linkedExcerptIDs.contains(excerpt.id) ? "Bağı kaldır" : "Özete bağla",
                                         systemImage: linkedExcerptIDs.contains(excerpt.id) ? "link.badge.minus" : "link.badge.plus"
                                     )
                                 }
@@ -709,16 +709,16 @@ private struct FrameworkEvidenceInspector: View {
 }
 
 private enum FrameworkEvidenceScope: String, CaseIterable, Identifiable {
-    case cell = "Cell"
-    case caseContext = "Full Case"
-    case summaryLinks = "Linked to Summary"
+    case cell = "Hücre"
+    case caseContext = "Tüm vaka"
+    case summaryLinks = "Özete bağlı"
     var id: String { rawValue }
 
     var emptyMessage: String {
         switch self {
-        case .cell: "No evidence in this cell"
-        case .caseContext: "No evidence in this case"
-        case .summaryLinks: "No evidence linked to the summary"
+        case .cell: "Bu hücrede kanıt yok"
+        case .caseContext: "Bu vakada kanıt yok"
+        case .summaryLinks: "Özete bağlı kanıt yok"
         }
     }
 }

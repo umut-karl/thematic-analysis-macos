@@ -8,23 +8,25 @@ final class AnalysisStore: ObservableObject {
     @Published var selectedInterviewID: UUID?
     @Published var selectedSegmentIDs: Set<UUID> = []
     @Published var selectedThemeIDs: Set<UUID> = []
-    @Published var lastMessage = "Ready"
+    @Published var lastMessage = "Hazır"
     @Published var isImporting = false
 
     private let fileManager = FileManager.default
+    let storageRoot: URL
     private let saveURL: URL
     private let backupDirectory: URL
     private var pendingSaveTask: Task<Void, Never>?
 
     init(storageRoot: URL? = nil, initialProject: AnalysisProject? = nil) {
         let base = storageRoot ?? Self.defaultStorageRoot()
+        self.storageRoot = base
         saveURL = base.appendingPathComponent("active-project.json")
         backupDirectory = base.appendingPathComponent("Backups", isDirectory: true)
         try? fileManager.createDirectory(at: base, withIntermediateDirectories: true)
         try? fileManager.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
 
         if let data = try? Data(contentsOf: saveURL),
-           let saved = try? JSONDecoder.thematic.decode(AnalysisProject.self, from: data) {
+           let saved = try? JSONDecoder.tematik.decode(AnalysisProject.self, from: data) {
             project = saved
         } else {
             project = initialProject ?? AnalysisProject(
@@ -35,7 +37,7 @@ final class AnalysisStore: ObservableObject {
         }
         selectedInterviewID = project.interviews.first?.id
         if initialProject != nil {
-            try? JSONEncoder.thematic.encode(project).write(to: saveURL, options: .atomic)
+            try? JSONEncoder.tematik.encode(project).write(to: saveURL, options: .atomic)
         }
     }
 
@@ -52,7 +54,7 @@ final class AnalysisStore: ObservableObject {
     var selectedText: String { selectedSegments.map(\.text).joined(separator: " ") }
 
     func themeName(_ id: UUID) -> String {
-        project.themes.first(where: { $0.id == id })?.name ?? "Deleted theme"
+        project.themes.first(where: { $0.id == id })?.name ?? "Silinmiş tema"
     }
 
     func themeNote(_ id: UUID) -> String {
@@ -63,6 +65,16 @@ final class AnalysisStore: ObservableObject {
         guard let index = project.themes.firstIndex(where: { $0.id == id }) else { return }
         project.themes[index].note = note.isEmpty ? nil : note
         schedulePersist()
+    }
+
+    var analysisMethodProfile: AnalysisMethodProfile {
+        project.analysisMethodProfile ?? .general
+    }
+
+    func updateAnalysisMethodProfile(_ profile: AnalysisMethodProfile) {
+        guard project.analysisMethodProfile != profile else { return }
+        project.analysisMethodProfile = profile
+        persist(message: "Analiz yöntemi güncellendi: \(profile.title)")
     }
 
     func themePath(for id: UUID) -> [ThemeNode] {
@@ -115,7 +127,7 @@ final class AnalysisStore: ObservableObject {
         project.interviews[interviewIndex].segments.insert(newRow, at: insertionIndex)
         renumberSegments(interviewIndex: interviewIndex)
         selectedSegmentIDs = [newRow.id]
-        persist(message: "New transcript row added")
+        persist(message: "Yeni transkript satırı eklendi")
     }
 
     func mergeSelectedTranscriptRows() {
@@ -141,7 +153,7 @@ final class AnalysisStore: ObservableObject {
         }
         renumberSegments(interviewIndex: interviewIndex)
         selectedSegmentIDs = [first.id]
-        persist(message: "\(selected.count) rows merged into one row")
+        persist(message: "\(selected.count) satır tek satırda birleştirildi")
     }
 
     func deleteSelectedTranscriptRows() {
@@ -154,7 +166,7 @@ final class AnalysisStore: ObservableObject {
         project.interviews[interviewIndex].codingUnits.removeAll { $0.segmentIDs.isEmpty }
         renumberSegments(interviewIndex: interviewIndex)
         selectedSegmentIDs.removeAll()
-        persist(message: "\(deleted.count) transcript rows deleted")
+        persist(message: "\(deleted.count) transkript satırı silindi")
     }
 
     func assignSelection(memo: String) {
@@ -184,7 +196,7 @@ final class AnalysisStore: ObservableObject {
             selectedSegmentIDs.removeAll()
             selectedThemeIDs.removeAll()
         }
-        persist(message: keepSelection ? "Theme saved; you can keep coding the same selection" : "Coding unit saved")
+        persist(message: keepSelection ? "Tema kaydedildi; aynı ifadeye devam edebilirsiniz" : "Kodlama birimi kaydedildi")
         return unitID
     }
 
@@ -203,7 +215,7 @@ final class AnalysisStore: ObservableObject {
         if project.interviews[interviewIndex].codingUnits[unitIndex].themeIDs.isEmpty {
             project.interviews[interviewIndex].codingUnits.remove(at: unitIndex)
         }
-        persist(message: "Theme assignment removed")
+        persist(message: "Tema ataması kaldırıldı")
     }
 
     func removeThemeAssignments(unitID: UUID, interviewID: UUID, matching ancestorID: UUID) {
@@ -214,7 +226,7 @@ final class AnalysisStore: ObservableObject {
         if project.interviews[interviewIndex].codingUnits[unitIndex].themeIDs.isEmpty {
             project.interviews[interviewIndex].codingUnits.remove(at: unitIndex)
         }
-        persist(message: "Theme assignment removed")
+        persist(message: "Tema ataması kaldırıldı")
     }
 
     func replaceThemeAssignments(unitID: UUID, interviewID: UUID, matching ancestorID: UUID, with replacementID: UUID) {
@@ -223,13 +235,13 @@ final class AnalysisStore: ObservableObject {
         let retained = project.interviews[interviewIndex].codingUnits[unitIndex].themeIDs.filter { !theme($0, isDescendantOf: ancestorID) }
         project.interviews[interviewIndex].codingUnits[unitIndex].themeIDs = Set(retained)
         project.interviews[interviewIndex].codingUnits[unitIndex].themeIDs.insert(replacementID)
-        persist(message: "Theme assignment updated")
+        persist(message: "Tema ataması güncellendi")
     }
 
     func removeCodingUnit(_ id: UUID, interviewID: UUID) {
         guard let index = project.interviews.firstIndex(where: { $0.id == interviewID }) else { return }
         project.interviews[index].codingUnits.removeAll { $0.id == id }
-        persist(message: "Coding removed")
+        persist(message: "Kodlama kaldırıldı")
     }
 
     @discardableResult
@@ -240,7 +252,7 @@ final class AnalysisStore: ObservableObject {
             ?? (children(of: nil).count % 6)
         let node = ThemeNode(name: clean, parentID: parentID, colorIndex: colorIndex)
         project.themes.append(node)
-        persist(message: "Theme “\(clean)” added")
+        persist(message: "“\(clean)” teması eklendi")
         return node.id
     }
 
@@ -254,9 +266,9 @@ final class AnalysisStore: ObservableObject {
             let interview = Interview(name: displayName, participant: displayName, participantDetails: nil, segments: rows)
             project.interviews.append(interview)
             selectedInterviewID = interview.id
-            persist(message: "\(rows.count) rows imported")
+            persist(message: "\(rows.count) satır içe aktarıldı")
         } catch {
-            lastMessage = "Import failed: \(error.localizedDescription)"
+            lastMessage = "İçe aktarma başarısız: \(error.localizedDescription)"
         }
     }
 
@@ -268,17 +280,17 @@ final class AnalysisStore: ObservableObject {
             guard !rows.isEmpty else { throw ImportError.noRows }
             let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
             let interview = Interview(
-                name: "\(cleanName) Transcript",
+                name: "\(cleanName) Transkripti",
                 participant: cleanName,
                 participantDetails: details,
                 segments: rows
             )
             project.interviews.append(interview)
             selectedInterviewID = interview.id
-            persist(message: "\(cleanName) added · \(rows.count) rows imported")
+            persist(message: "\(cleanName) eklendi · \(rows.count) satır içe aktarıldı")
             return true
         } catch {
-            lastMessage = "Could not add participant: \(error.localizedDescription)"
+            lastMessage = "Katılımcı eklenemedi: \(error.localizedDescription)"
             return false
         }
     }
@@ -292,21 +304,21 @@ final class AnalysisStore: ObservableObject {
     ) -> Bool {
         let cleanParticipantName = participantName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanParticipantName.isEmpty else {
-            lastMessage = "Participant name cannot be empty"
+            lastMessage = "Katılımcı adı boş bırakılamaz"
             return false
         }
         guard let index = project.interviews.firstIndex(where: { $0.id == interviewID }) else {
-            lastMessage = "Participant not found"
+            lastMessage = "Katılımcı bulunamadı"
             return false
         }
 
         let cleanInterviewName = interviewName.trimmingCharacters(in: .whitespacesAndNewlines)
         project.interviews[index].participant = cleanParticipantName
         project.interviews[index].name = cleanInterviewName.isEmpty
-            ? "\(cleanParticipantName) Transcript"
+            ? "\(cleanParticipantName) Transkripti"
             : cleanInterviewName
         project.interviews[index].participantDetails = details
-        persist(message: "\(cleanParticipantName) details updated")
+        persist(message: "\(cleanParticipantName) bilgileri güncellendi")
         return true
     }
 
@@ -320,19 +332,19 @@ final class AnalysisStore: ObservableObject {
     ) -> UUID? {
         let cleanParticipant = participantName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanParticipant.isEmpty else {
-            lastMessage = "A participant name is required for a new case"
+            lastMessage = "Yeni vaka için katılımcı adı gerekli"
             return nil
         }
         let segments = TranscriptionSegmenter.segments(from: transcript)
         guard !segments.isEmpty else {
-            lastMessage = "A case could not be created because the transcript is empty"
+            lastMessage = "Transkripsiyon boş olduğu için vaka oluşturulamadı"
             return nil
         }
         let cleanInterviewName = interviewName.trimmingCharacters(in: .whitespacesAndNewlines)
         var details = ParticipantDetails()
-        details.notes = "Audio transcription · Model: \(model) · Source: \(sourceFileName)"
+        details.notes = "Debug ses transkripsiyonu · Model: \(model) · Kaynak: \(sourceFileName)"
         let interview = Interview(
-            name: cleanInterviewName.isEmpty ? "\(cleanParticipant) Transcript" : cleanInterviewName,
+            name: cleanInterviewName.isEmpty ? "\(cleanParticipant) Transkripti" : cleanInterviewName,
             participant: cleanParticipant,
             participantDetails: details,
             segments: segments
@@ -341,7 +353,7 @@ final class AnalysisStore: ObservableObject {
         selectedInterviewID = interview.id
         selectedSegmentIDs.removeAll()
         selectedThemeIDs.removeAll()
-        persist(message: "Added \(segments.count) GPT transcript rows for \(cleanParticipant)")
+        persist(message: "\(cleanParticipant) için \(segments.count) satırlık GPT transkripsiyonu eklendi")
         return interview.id
     }
 
@@ -357,7 +369,7 @@ final class AnalysisStore: ObservableObject {
     ) -> UUID? {
         let cleanParticipant = participantName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanParticipant.isEmpty else {
-            lastMessage = "A participant name is required for a new case"
+            lastMessage = "Yeni vaka için katılımcı adı gerekli"
             return nil
         }
 
@@ -376,17 +388,17 @@ final class AnalysisStore: ObservableObject {
             )
         }
         guard !segments.isEmpty else {
-            lastMessage = "A case could not be created because the timed transcript is empty"
+            lastMessage = "Zamanlı transkripsiyon boş olduğu için vaka oluşturulamadı"
             return nil
         }
 
         let cleanInterviewName = interviewName.trimmingCharacters(in: .whitespacesAndNewlines)
         var details = participantDetails ?? ParticipantDetails()
-        let provenance = "Audio transcription · Model: \(model) · Source: \(sourceFileName)"
+        let provenance = "Ses transkripsiyonu · Model: \(model) · Kaynak: \(sourceFileName)"
         let cleanNotes = details.notes.trimmingCharacters(in: .whitespacesAndNewlines)
         details.notes = cleanNotes.isEmpty ? provenance : "\(cleanNotes)\n\(provenance)"
         let interview = Interview(
-            name: cleanInterviewName.isEmpty ? "\(cleanParticipant) Transcript" : cleanInterviewName,
+            name: cleanInterviewName.isEmpty ? "\(cleanParticipant) Transkripti" : cleanInterviewName,
             participant: cleanParticipant,
             participantDetails: details,
             segments: segments
@@ -395,7 +407,7 @@ final class AnalysisStore: ObservableObject {
         selectedInterviewID = interview.id
         selectedSegmentIDs.removeAll()
         selectedThemeIDs.removeAll()
-        persist(message: "Added \(segments.count) timed, speaker-labeled rows for \(cleanParticipant)")
+        persist(message: "\(cleanParticipant) için \(segments.count) zamanlı ve konuşmacılı satır eklendi")
         return interview.id
     }
 
@@ -409,9 +421,9 @@ final class AnalysisStore: ObservableObject {
             let imported = ThemeMarkdownImporter.parse(markdown)
             guard !imported.isEmpty else { throw ImportError.noRows }
             project.themes.append(contentsOf: imported)
-            persist(message: "\(imported.count) theme nodes imported")
+            persist(message: "\(imported.count) tema düğümü içe aktarıldı")
         } catch {
-            lastMessage = "Could not import theme list: \(error.localizedDescription)"
+            lastMessage = "Tema listesi içe aktarılamadı: \(error.localizedDescription)"
         }
     }
 
@@ -426,9 +438,9 @@ final class AnalysisStore: ObservableObject {
             selectedInterviewID = project.interviews.first?.id
             selectedSegmentIDs.removeAll()
             selectedThemeIDs.removeAll()
-            persist(message: "Project backup restored")
+            persist(message: "Proje yedeği geri yüklendi")
         } catch {
-            lastMessage = "Could not open backup: \(error.localizedDescription)"
+            lastMessage = "Yedek açılamadı: \(error.localizedDescription)"
         }
     }
 
@@ -437,21 +449,21 @@ final class AnalysisStore: ObservableObject {
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
             let url = backupDirectory.appendingPathComponent("ThematicAnalysis_\(formatter.string(from: .now)).json")
-            let data = try JSONEncoder.thematic.encode(project)
+            let data = try JSONEncoder.tematik.encode(project)
             try data.write(to: url, options: .atomic)
-            lastMessage = "Backup created: \(url.lastPathComponent)"
+            lastMessage = "Yedek oluşturuldu: \(url.lastPathComponent)"
         } catch {
-            lastMessage = "Could not create backup: \(error.localizedDescription)"
+            lastMessage = "Yedek oluşturulamadı: \(error.localizedDescription)"
         }
     }
 
-    func persist(message: String = "Changes saved") {
+    func persist(message: String = "Değişiklikler kaydedildi") {
         do {
             project.updatedAt = .now
-            try JSONEncoder.thematic.encode(project).write(to: saveURL, options: .atomic)
+            try JSONEncoder.tematik.encode(project).write(to: saveURL, options: .atomic)
             lastMessage = message
         } catch {
-            lastMessage = "Save failed: \(error.localizedDescription)"
+            lastMessage = "Kaydetme hatası: \(error.localizedDescription)"
         }
     }
 
@@ -494,11 +506,10 @@ final class AnalysisStore: ObservableObject {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         return base.appendingPathComponent("ThematicAnalysis", isDirectory: true)
     }
-
 }
 
 extension JSONEncoder {
-    static var thematic: JSONEncoder {
+    static var tematik: JSONEncoder {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
@@ -507,7 +518,7 @@ extension JSONEncoder {
 }
 
 extension JSONDecoder {
-    static var thematic: JSONDecoder {
+    static var tematik: JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         return decoder

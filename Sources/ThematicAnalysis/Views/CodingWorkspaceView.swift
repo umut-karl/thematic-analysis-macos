@@ -11,15 +11,15 @@ struct CodingWorkspaceView: View {
                 .frame(minWidth: 480, idealWidth: 760)
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("Coding Panel").font(.headline)
+                    Text("Kodlama Alanı").font(.headline)
                     if store.selectedSegmentIDs.isEmpty {
                         ContentUnavailableView(
-                            "Select rows first",
+                            "Önce satır seçin",
                             systemImage: "cursorarrow.click.2",
-                            description: Text("Select consecutive rows from the same conversation to create one coding unit.")
+                            description: Text("Aynı konuşmanın art arda gelen satırlarını birlikte seçerek tek bir kodlama birimi oluşturabilirsiniz.")
                         )
                     } else {
-                        GroupBox("Selected excerpt") {
+                        GroupBox("Seçilen ifade") {
                             Text(store.selectedText).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
                                 .lineLimit(2...8)
                         }
@@ -30,19 +30,19 @@ struct CodingWorkspaceView: View {
                             removeAssigned: store.removeThemeFromCurrentSelection
                         )
                         HStack {
-                            Button("Save Theme and Continue") {
+                            Button("Temayı Kaydet ve Devam Et") {
                                 guard let active = themePath.last else { return }
                                 _ = store.saveCodingSelection(themeIDs: [active], memo: memo, keepSelection: true)
                                 themePath.removeAll()
                             }
                             .disabled(themePath.isEmpty)
-                            .help("Save this theme and choose another theme for the same excerpt")
+                            .help("Bu temayı hemen kaydet ve aynı ifadeye başka bir tema seç")
                             Spacer()
-                            Text("The selected excerpt remains open.").font(.caption).foregroundStyle(.secondary)
+                            Text("Seçili ifade açık kalır.").font(.caption).foregroundStyle(.secondary)
                         }
-                        TextField("Analytical note (optional)", text: $memo, axis: .vertical)
+                        TextField("Analitik not (isteğe bağlı)", text: $memo, axis: .vertical)
                             .lineLimit(2...5).textFieldStyle(.roundedBorder)
-                        Button("Save and Finish Coding") {
+                        Button("Kaydet ve Kodlamayı Bitir") {
                             var ids = store.selectedThemeIDs
                             if let active = themePath.last { ids.insert(active) }
                             _ = store.saveCodingSelection(themeIDs: ids, memo: memo, keepSelection: false)
@@ -77,21 +77,21 @@ private struct ThemePickerView: View {
     private var currentParent: UUID? { path.last }
 
     var body: some View {
-        GroupBox("Choose theme path") {
+        GroupBox("Tema yolu seç") {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
                     ThemeHierarchyPickerButton(
                         store: store,
-                        title: path.last.map(store.themeName) ?? AppLocalization.string("Choose from Hierarchy…"),
+                        title: path.last.map(store.themeName) ?? AppLocalization.string("Hiyerarşiden Tema Seç…"),
                         choose: chooseTheme
                     )
                     if !path.isEmpty {
                         Button { path.removeAll() } label: { Image(systemName: "xmark.circle") }
-                            .buttonStyle(.plain).help("Clear theme selection")
+                            .buttonStyle(.plain).help("Tema seçimini temizle")
                     }
                 }
 
-                TextField("Search theme name or path", text: $themeQuery)
+                TextField("Tema adında veya yolunda ara", text: $themeQuery)
                     .textFieldStyle(.roundedBorder)
                 if !themeQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     VStack(alignment: .leading, spacing: 3) {
@@ -109,16 +109,16 @@ private struct ThemePickerView: View {
 
                 if !path.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Selected Path").font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
+                        Text("Seçilen yol").font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
                         ForEach(Array(path.enumerated()), id: \.offset) { level, id in
                             if let theme = store.project.themes.first(where: { $0.id == id }) {
                                 HStack(alignment: .top, spacing: 8) {
                                     Circle().fill(ThemePalette.color(theme.colorIndex)).frame(width: 7, height: 7).padding(.top, 5)
                                     VStack(alignment: .leading, spacing: 1) {
                                         if level == 0 {
-                                            Text("Main theme").font(.caption2).foregroundStyle(.tertiary)
+                                            Text("Ana tema").font(.caption2).foregroundStyle(.tertiary)
                                         } else {
-                                            (Text(level.formatted()) + Text(" level"))
+                                            (Text(level.formatted()) + Text(". alt düzey"))
                                                 .font(.caption2).foregroundStyle(.tertiary)
                                         }
                                         Text(theme.name).font(.callout).lineLimit(nil).fixedSize(horizontal: false, vertical: true)
@@ -132,7 +132,7 @@ private struct ThemePickerView: View {
 
                 HStack {
                     TextField(
-                        AppLocalization.string(currentParent == nil ? "New main theme" : "New subtheme at this level"),
+                        AppLocalization.string(currentParent == nil ? "Yeni ana tema" : "Bu düzeye yeni alt tema"),
                         text: $newName
                     )
                     Button {
@@ -144,7 +144,7 @@ private struct ThemePickerView: View {
                 }
                 if !selectedThemeIDs.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Themes assigned to this excerpt").font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
+                        Text("Bu ifadeye atanmış temalar").font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
                         ForEach(selectedThemeIDs.sorted(by: { store.themePathName(for: $0) < store.themePathName(for: $1) }), id: \.self) { id in
                             let color = store.project.themes.first(where: { $0.id == id }).map { ThemePalette.color($0.colorIndex) } ?? .accentColor
                             HStack(alignment: .top, spacing: 8) {
@@ -153,7 +153,7 @@ private struct ThemePickerView: View {
                                     .font(.caption).lineLimit(nil).fixedSize(horizontal: false, vertical: true)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 Button { removeAssigned(id) } label: { Image(systemName: "xmark.circle.fill") }
-                                    .buttonStyle(.plain).foregroundStyle(.secondary).help("Remove theme assignment")
+                                    .buttonStyle(.plain).foregroundStyle(.secondary).help("Tema atamasını kaldır")
                             }
                             .padding(8).background(color.opacity(0.08), in: RoundedRectangle(cornerRadius: 7))
                         }

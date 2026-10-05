@@ -27,29 +27,29 @@ struct TranscriptTableView: View {
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(interview.name).font(.title2).fontWeight(.semibold)
-                        Text(interview.segments.count.formatted()) + Text(" row(s) · ")
-                            + Text(interview.codingUnits.count.formatted()) + Text(" coding unit(s)")
+                        Text(interview.segments.count.formatted()) + Text(" satır · ")
+                            + Text(interview.codingUnits.count.formatted()) + Text(" kodlama birimi")
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Toggle("Coded only", isOn: $codedOnly).toggleStyle(.switch)
+                    Toggle("Yalnızca kodlanmış", isOn: $codedOnly).toggleStyle(.switch)
                     Button {
                         exportTranscript(interview)
                     } label: {
                         Label("Excel", systemImage: "square.and.arrow.up")
                     }
-                    .help("Export this transcript to Excel with speaker and time information")
+                    .help("Bu transkripti konuşmacı ve zaman bilgileriyle Excel olarak dışa aktar")
                     if !codingMode {
                         Divider().frame(height: 22)
                         if isEditingTable {
-                            Button { store.insertTranscriptRow() } label: { Label("Add Row", systemImage: "plus") }
-                            Button { store.mergeSelectedTranscriptRows() } label: { Label("Merge", systemImage: "arrow.triangle.merge") }
+                            Button { store.insertTranscriptRow() } label: { Label("Satır Ekle", systemImage: "plus") }
+                            Button { store.mergeSelectedTranscriptRows() } label: { Label("Birleştir", systemImage: "arrow.triangle.merge") }
                                 .disabled(store.selectedSegmentIDs.count < 2)
-                                .help("Merge selected rows while preserving text and time range")
-                            Button(role: .destructive) { showDeleteConfirmation = true } label: { Label("Delete", systemImage: "trash") }
+                                .help("Seçili satırları metin ve zaman aralığı korunarak tek satır yap")
+                            Button(role: .destructive) { showDeleteConfirmation = true } label: { Label("Sil", systemImage: "trash") }
                                 .disabled(store.selectedSegmentIDs.isEmpty)
                         }
-                        Button(isEditingTable ? "Done" : "Edit Table") {
+                        Button(isEditingTable ? "Bitti" : "Tabloyu Düzenle") {
                             isEditingTable.toggle()
                             if !isEditingTable { store.persist() }
                         }
@@ -68,33 +68,33 @@ struct TranscriptTableView: View {
                 timeColumnWidth: $timeColumnWidth,
                 binding: binding
             )
-            .searchable(text: $query, prompt: "Search text or speaker")
+            .searchable(text: $query, prompt: "Metin veya konuşmacı ara")
             .overlay {
-                if rows.isEmpty { ContentUnavailableView("No rows found", systemImage: "text.magnifyingglass") }
+                if rows.isEmpty { ContentUnavailableView("Satır bulunamadı", systemImage: "text.magnifyingglass") }
             }
 
             if codingMode {
                 HStack {
                     if store.selectedSegmentIDs.isEmpty {
-                        Text("Select one or several consecutive rows to code.")
+                        Text("Kodlamak için bir veya art arda birkaç satır seçin.")
                             .font(.callout).foregroundStyle(.secondary)
                     } else {
-                        (Text(store.selectedSegmentIDs.count.formatted()) + Text(" row(s) selected"))
+                        (Text(store.selectedSegmentIDs.count.formatted()) + Text(" satır seçildi"))
                             .font(.callout).foregroundStyle(.secondary)
                     }
                     Spacer()
                     if !store.selectedSegmentIDs.isEmpty {
-                        Text("Select multiple rows using checkboxes").font(.caption).foregroundStyle(.tertiary)
+                        Text("Satır işaretleriyle çoklu seçim").font(.caption).foregroundStyle(.tertiary)
                     }
                 }
                 .padding(.horizontal, 16).frame(height: 38).background(.bar)
             }
         }
-        .alert("Delete selected rows?", isPresented: $showDeleteConfirmation) {
-            Button("Cancel", role: .cancel) {}
-            Button("Delete Rows", role: .destructive) { store.deleteSelectedTranscriptRows() }
+        .alert("Seçili satırlar silinsin mi?", isPresented: $showDeleteConfirmation) {
+            Button("Vazgeç", role: .cancel) {}
+            Button("Satırları Sil", role: .destructive) { store.deleteSelectedTranscriptRows() }
         } message: {
-            Text("Coding linked to these rows will be updated and the project will be saved automatically.")
+            Text("Bu satırlara bağlı kodlamalar da güncellenecek ve proje otomatik kaydedilecek.")
         }
     }
 
@@ -108,10 +108,10 @@ struct TranscriptTableView: View {
     private func exportTranscript(_ interview: Interview) {
         do {
             if let url = try ExportService.exportTranscriptXLSX(interview) {
-                store.lastMessage = "Excel export saved: \(url.lastPathComponent)"
+                store.lastMessage = "Excel çıktısı kaydedildi: \(url.lastPathComponent)"
             }
         } catch {
-            store.lastMessage = "Could not create Excel export: \(error.localizedDescription)"
+            store.lastMessage = "Excel çıktısı oluşturulamadı: \(error.localizedDescription)"
         }
     }
 }
@@ -151,9 +151,9 @@ private struct TranscriptGrid: View {
                     HStack(spacing: 8) {
                         Color.clear.frame(width: 22)
                         ResizableColumnHeader("#", width: $numberColumnWidth, range: 28...72)
-                        ResizableColumnHeader("Speaker", width: $speakerColumnWidth, range: 70...240)
-                        ResizableColumnHeader("Time", width: $timeColumnWidth, range: 100...220)
-                        Text("Text").frame(maxWidth: .infinity, alignment: .leading)
+                        ResizableColumnHeader("Konuşmacı", width: $speakerColumnWidth, range: 70...240)
+                        ResizableColumnHeader("Zaman", width: $timeColumnWidth, range: 100...220)
+                        Text("Metin").frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
                     .padding(.horizontal, 10).padding(.vertical, 7).background(.bar)
@@ -183,20 +183,20 @@ private struct TranscriptGridRow: View {
                     .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
             }
             .buttonStyle(.plain).frame(width: 22)
-            .help(AppLocalization.string(isSelected ? "Deselect row" : "Select row"))
+            .help(AppLocalization.string(isSelected ? "Satır seçimini kaldır" : "Satırı seç"))
 
             Text(row.order.formatted()).font(.caption).foregroundStyle(.secondary)
                 .frame(width: numberColumnWidth, alignment: .leading).padding(.top, 4)
 
             if isEditing {
-                TextField("Speaker", text: binding(row.id, \.speaker), axis: .vertical)
+                TextField("Konuşmacı", text: binding(row.id, \.speaker), axis: .vertical)
                     .textFieldStyle(.roundedBorder).lineLimit(1...3).frame(width: speakerColumnWidth)
                 HStack(spacing: 3) {
                     TextField("00:00", text: binding(row.id, \.start)).textFieldStyle(.roundedBorder).frame(width: 48)
                     Text("–").foregroundStyle(.tertiary)
                     TextField("00:00", text: binding(row.id, \.end)).textFieldStyle(.roundedBorder).frame(width: 48)
                 }.font(.caption).monospacedDigit().frame(width: timeColumnWidth)
-                TextField("Transcript text", text: binding(row.id, \.text), axis: .vertical)
+                TextField("Transkript metni", text: binding(row.id, \.text), axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .font(.callout)
                     .lineLimit(2...10)
@@ -214,7 +214,7 @@ private struct TranscriptGridRow: View {
                 Text(row.start.isEmpty ? "—" : "\(row.start)–\(row.end)")
                     .font(.callout).monospacedDigit().frame(width: timeColumnWidth, alignment: .leading).padding(.top, 2)
                 HStack(alignment: .top, spacing: 8) {
-                    Text(row.text.isEmpty ? "Empty row" : row.text)
+                    Text(row.text.isEmpty ? "Boş satır" : row.text)
                         .font(.callout)
                         .foregroundStyle(row.text.isEmpty ? .secondary : .primary)
                         .lineLimit(nil)
@@ -293,10 +293,10 @@ private struct ResizableColumnHeader: View {
                         }
                         .onEnded { _ in dragOrigin = nil }
                 )
-                .help("\(AppLocalization.string(title)) · \(AppLocalization.string("Change column width"))")
+                .help("\(AppLocalization.string(title)) · \(AppLocalization.string("Kolon genişliğini değiştir"))")
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(AppLocalization.string(title)) · \(AppLocalization.string("Column width"))")
+            .accessibilityLabel("\(AppLocalization.string(title)) · \(AppLocalization.string("Kolon genişliği"))")
             .accessibilityValue("\(Int(width)) punto")
             .accessibilityAdjustableAction { direction in
                 switch direction {

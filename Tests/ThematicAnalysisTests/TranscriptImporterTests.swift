@@ -2,28 +2,28 @@ import XCTest
 @testable import ThematicAnalysis
 
 final class TranscriptImporterTests: XCTestCase {
-    func testMapsEnglishTranscriptHeaders() {
+    func testMapsTurkishTranscriptHeaders() {
         let rows = [
-            ["order", "part", "speaker", "start", "end", "text"],
-            ["1", "2", "A", "00:01", "00:04", " First excerpt "],
-            ["2", "2", "B", "00:05", "00:08", "Second excerpt"]
+            ["sira", "parca", "konusmaci", "baslangic", "bitis", "metin"],
+            ["1", "2", "A", "00:01", "00:04", " İlk ifade "],
+            ["2", "2", "B", "00:05", "00:08", "İkinci ifade"]
         ]
         let segments = TranscriptImporter.makeSegments(rows)
         XCTAssertEqual(segments.count, 2)
         XCTAssertEqual(segments[0].order, 1)
         XCTAssertEqual(segments[0].part, 2)
         XCTAssertEqual(segments[0].speaker, "A")
-        XCTAssertEqual(segments[0].text, "First excerpt")
+        XCTAssertEqual(segments[0].text, "İlk ifade")
     }
 
     func testSkipsEmptyTextRows() {
-        let rows = [["order", "text"], ["1", ""], ["2", "One excerpt"]]
+        let rows = [["sira", "metin"], ["1", ""], ["2", "Bir ifade"]]
         XCTAssertEqual(TranscriptImporter.makeSegments(rows).map(\.order), [2])
     }
 
     func testOptionalXLSXFixture() throws {
-        guard let path = ProcessInfo.processInfo.environment["THEMATIC_ANALYSIS_FIXTURE"] else {
-            throw XCTSkip("No local XLSX fixture path was provided")
+        guard let path = ProcessInfo.processInfo.environment["TEMATIK_ANALIZ_FIXTURE"] else {
+            throw XCTSkip("Yerel XLSX fixture yolu verilmedi")
         }
         let segments = try TranscriptImporter.importFile(at: URL(fileURLWithPath: path))
         XCTAssertEqual(segments.count, 480)
@@ -33,13 +33,13 @@ final class TranscriptImporterTests: XCTestCase {
 
     func testParsesNestedThemeMarkdown() {
         let markdown = """
-        # Themes
-        ## **Experiences**
-        ### Interaction
-        - Emotional outcomes
-        \t- Distrust
-        \t\t- Source uncertainty
-        ## **Attitudes and beliefs**
+        # Temalar
+        ## **Deneyimler**
+        ### Etkileşim
+        - Duygusal edinimler
+        \t- Güvensizlik
+        \t\t- Kaynak belirsizliği
+        ## **Tutum ve inançlar**
         """
         let nodes = ThemeMarkdownImporter.parse(markdown)
         XCTAssertEqual(nodes.count, 6)
@@ -50,8 +50,8 @@ final class TranscriptImporterTests: XCTestCase {
     }
 
     func testOptionalThemeFixture() throws {
-        guard let path = ProcessInfo.processInfo.environment["THEMATIC_ANALYSIS_THEME_FIXTURE"] else {
-            throw XCTSkip("No local Markdown fixture path was provided")
+        guard let path = ProcessInfo.processInfo.environment["TEMATIK_ANALIZ_THEME_FIXTURE"] else {
+            throw XCTSkip("Yerel Markdown fixture yolu verilmedi")
         }
         let markdown = try String(contentsOfFile: path, encoding: .utf8)
         let nodes = ThemeMarkdownImporter.parse(markdown)
@@ -61,25 +61,25 @@ final class TranscriptImporterTests: XCTestCase {
 
     func testLegacyInterviewWithoutDemographicsStillDecodes() throws {
         let interview = Interview(
-            name: "Participant A Transcript",
-            participant: "Participant A",
-            participantDetails: ParticipantDetails(gender: "Woman"),
+            name: "Ayşe Transkripti",
+            participant: "Ayşe",
+            participantDetails: ParticipantDetails(gender: "Kadın"),
             segments: []
         )
-        let encoded = try JSONEncoder.thematic.encode(interview)
+        let encoded = try JSONEncoder.tematik.encode(interview)
         var object = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
         object.removeValue(forKey: "participantDetails")
         let legacyData = try JSONSerialization.data(withJSONObject: object)
-        let decoded = try JSONDecoder.thematic.decode(Interview.self, from: legacyData)
-        XCTAssertEqual(decoded.participant, "Participant A")
+        let decoded = try JSONDecoder.tematik.decode(Interview.self, from: legacyData)
+        XCTAssertEqual(decoded.participant, "Ayşe")
         XCTAssertNil(decoded.participantDetails)
     }
 
     func testLegacyParticipantDetailsGainNewOptionalFields() throws {
-        let legacy = Data(#"{"gender":"Woman","age":"35","education":"Bachelor's degree","occupation":"Researcher","location":"Ankara","notes":""}"#.utf8)
+        let legacy = Data(#"{"gender":"Kadın","age":"35","education":"Lisans","occupation":"Araştırmacı","location":"Ankara","notes":""}"#.utf8)
         let details = try JSONDecoder().decode(ParticipantDetails.self, from: legacy)
 
-        XCTAssertEqual(details.occupation, "Researcher")
+        XCTAssertEqual(details.occupation, "Araştırmacı")
         XCTAssertEqual(details.location, "Ankara")
         XCTAssertEqual(details.employmentStatus, "")
         XCTAssertEqual(details.sector, "")
@@ -89,19 +89,19 @@ final class TranscriptImporterTests: XCTestCase {
 
     @MainActor
     func testCreatesParticipantFromOptionalXLSXFixture() async throws {
-        guard let path = ProcessInfo.processInfo.environment["THEMATIC_ANALYSIS_FIXTURE"] else {
-            throw XCTSkip("No local XLSX fixture path was provided")
+        guard let path = ProcessInfo.processInfo.environment["TEMATIK_ANALIZ_FIXTURE"] else {
+            throw XCTSkip("Yerel XLSX fixture yolu verilmedi")
         }
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("ThematicAnalysis-Test-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
         let store = AnalysisStore(storageRoot: root)
         let before = store.project.interviews.count
-        let details = ParticipantDetails(gender: "Woman", age: "35", occupation: "Researcher")
-        let result = await store.createParticipant(name: "Participant B", details: details, transcriptURL: URL(fileURLWithPath: path))
+        let details = ParticipantDetails(gender: "Kadın", age: "35", occupation: "Araştırmacı")
+        let result = await store.createParticipant(name: "Fatma", details: details, transcriptURL: URL(fileURLWithPath: path))
         XCTAssertTrue(result)
         XCTAssertEqual(store.project.interviews.count, before + 1)
-        XCTAssertEqual(store.selectedInterview?.name, "Participant B Transcript")
+        XCTAssertEqual(store.selectedInterview?.name, "Fatma Transkripti")
         XCTAssertEqual(store.selectedInterview?.segments.count, 480)
-        XCTAssertEqual(store.selectedInterview?.participantDetails?.occupation, "Researcher")
+        XCTAssertEqual(store.selectedInterview?.participantDetails?.occupation, "Araştırmacı")
     }
 }

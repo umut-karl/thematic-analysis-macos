@@ -1,40 +1,58 @@
 import Foundation
 
 enum DebugLabModule: String, CaseIterable, Identifiable {
+    case overview
     case profile
     case frequency
     case milesMatrix
     case prevalence
+    case codebook
+    case themeWorkbench
+    case queries
+    case journal
+    case evidenceReport
     case frameworkMatrix
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .profile: "Theme Dominance"
-        case .frequency: "Content Analysis"
-        case .milesMatrix: "Miles–Huberman Matrix"
-        case .prevalence: "Participant Prevalence"
+        case .overview: "Debug Analiz Laboratuvarı"
+        case .profile: "Tema Baskınlık Profili"
+        case .frequency: "Nitel İçerik Analizi"
+        case .milesMatrix: "Miles–Huberman Matrisi"
+        case .prevalence: "Katılımcı Yaygınlığı"
+        case .codebook: "Kod Kitabı"
+        case .themeWorkbench: "Tema Geliştirme Masası"
+        case .queries: "Karşılaştırma ve Sorgu"
+        case .journal: "Refleksif Araştırma Günlüğü"
+        case .evidenceReport: "Kanıta Bağlı Rapor"
         case .frameworkMatrix: "Framework Matrix"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .profile: "Compare frequency, participant reach, and case intensity."
-        case .frequency: "Review coding frequency and its share of the dataset."
-        case .milesMatrix: "Compare participants across themes on a 0–2 scale."
-        case .prevalence: "See how many participants contribute evidence to each theme."
-        case .frameworkMatrix: "Review analytic summaries and evidence by participant and theme."
+        case .overview: "Deneysel yöntemleri tek tek inceleyin; bu alan proje verisini değiştirmez."
+        case .profile: "Frekans, katılımcı erişimi ve vaka yoğunluğunu birlikte okuyun."
+        case .frequency: "Kodlama görünümü ve toplam içindeki payı betimsel olarak karşılaştırın."
+        case .milesMatrix: "Katılımcıları kavramsal temalara göre 0–2 gösterimle karşılaştırın."
+        case .prevalence: "Bir temanın kaç farklı katılımcının verisinde görüldüğünü inceleyin."
+        case .codebook: "Kod tanımlarını, sınırlarını, örneklerini ve sürüm durumunu değerlendirin."
+        case .themeWorkbench: "Kodlardan aday temalara, gözden geçirmeden nihai temaya ilerleyin."
+        case .queries: "Kod birlikteliklerini ve katılımcı gruplarını mantıksal sorgularla karşılaştırın."
+        case .journal: "Analitik kararları, tereddütleri ve araştırmacı konumunu zaman içinde izleyin."
+        case .evidenceReport: "Tema anlatısını destekleyen ve sınırlandıran kanıtlarla birlikte okuyun."
+        case .frameworkMatrix: "Katılımcı × tema hücrelerinde analitik özetleri ve dayanak alıntıları inceleyin."
         }
     }
 }
 
 enum DebugCodeStatus: String, CaseIterable, Identifiable {
-    case draft = "Draft"
-    case active = "Active"
-    case review = "Review"
-    case retired = "Retired"
+    case draft = "Taslak"
+    case active = "Etkin"
+    case review = "Gözden geçir"
+    case retired = "Arşiv"
 
     var id: String { rawValue }
 }
@@ -69,9 +87,9 @@ struct DebugResearchExcerpt: Identifiable, Hashable {
 }
 
 enum DebugThemeStage: String, CaseIterable, Identifiable {
-    case candidate = "Candidate"
-    case review = "In Review"
-    case final = "Final"
+    case candidate = "Aday"
+    case review = "Gözden geçiriliyor"
+    case final = "Nihai"
 
     var id: String { rawValue }
 }
@@ -91,11 +109,11 @@ struct DebugCandidateTheme: Identifiable, Hashable {
 }
 
 enum DebugJournalPhase: String, CaseIterable, Identifiable {
-    case familiarization = "Familiarization"
-    case coding = "Coding"
-    case themeDevelopment = "Theme Development"
-    case review = "Theme Review"
-    case reporting = "Reporting"
+    case familiarization = "Veriye aşinalık"
+    case coding = "Kodlama"
+    case themeDevelopment = "Tema geliştirme"
+    case review = "Tema gözden geçirme"
+    case reporting = "Raporlama"
 
     var id: String { rawValue }
 }
@@ -112,9 +130,9 @@ struct DebugJournalEntry: Identifiable, Hashable {
 }
 
 enum DebugQueryOperator: String, CaseIterable, Identifiable {
-    case and = "Both (AND)"
-    case or = "At Least One (OR)"
-    case without = "First Without Second (NOT)"
+    case and = "İkisi de (AND)"
+    case or = "En az biri (OR)"
+    case without = "Birinci var, ikinci yok (NOT)"
 
     var id: String { rawValue }
 }

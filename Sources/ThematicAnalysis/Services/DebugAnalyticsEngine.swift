@@ -129,4 +129,29 @@ enum DebugAnalyticsEngine {
         )
     }
 
+    static let demo: DebugAnalysisDataset = {
+        let participants: [DebugAnalysisDataset.Participant] = ["Ayşe", "Fatma", "Burak", "Deniz", "Ece", "Kerem", "Selin", "Mert"]
+            .enumerated().map { DebugAnalysisDataset.Participant(id: "p\($0.offset)", name: $0.element) }
+        let names = ["Araç / yardımcı", "İş ortağı", "İnsansı zihin", "Tehdit / kontrol kaybı", "Kara kutu"]
+        let themes = names.enumerated().map {
+            DebugAnalysisDataset.Theme(id: "t\($0.offset)", name: $0.element, path: "Yapay zekâ tanımları › \($0.element)", colorIndex: $0.offset)
+        }
+        let values = [
+            [4, 2, 0, 1, 0],
+            [3, 1, 1, 0, 1],
+            [5, 3, 0, 0, 1],
+            [2, 2, 1, 2, 0],
+            [4, 1, 0, 1, 2],
+            [3, 0, 2, 1, 1],
+            [5, 2, 1, 0, 0],
+            [2, 1, 0, 2, 1]
+        ]
+        var counts: [String: [String: Int]] = [:]
+        for (participantIndex, participant) in participants.enumerated() {
+            for (themeIndex, theme) in themes.enumerated() {
+                counts[participant.id, default: [:]][theme.id] = values[participantIndex][themeIndex]
+            }
+        }
+        return DebugAnalysisDataset(participants: participants, themes: themes, counts: counts)
+    }()
 }

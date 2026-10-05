@@ -8,10 +8,10 @@ enum ImportError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .unsupported: AppLocalization.string("This file type is not supported yet. Choose XLSX, CSV, or TSV.")
-        case .noRows: AppLocalization.string("No transcript rows were found to import.")
-        case .extractionFailed: AppLocalization.string("The Excel file could not be opened.")
-        case .invalidWorkbook: AppLocalization.string("The Excel worksheet could not be read.")
+        case .unsupported: AppLocalization.string("Bu dosya türü henüz desteklenmiyor. XLSX, CSV veya TSV seçin.")
+        case .noRows: AppLocalization.string("Dosyada içe aktarılabilecek transkript satırı bulunamadı.")
+        case .extractionFailed: AppLocalization.string("Excel dosyası açılamadı.")
+        case .invalidWorkbook: AppLocalization.string("Excel çalışma sayfası okunamadı.")
         }
     }
 }
@@ -61,12 +61,12 @@ enum TranscriptImporter {
         guard let header = table.first else { return [] }
         let normalized = header.map(normalizeHeader)
         func index(_ names: [String]) -> Int? { names.compactMap { normalized.firstIndex(of: $0) }.first }
-        let orderIndex = index(["no", "order"])
-        let partIndex = index(["part"])
-        let speakerIndex = index(["speaker", "participant"])
-        let startIndex = index(["start"])
-        let endIndex = index(["end"])
-        let textIndex = index(["text", "transcript", "quote"]) ?? max(0, header.count - 1)
+        let orderIndex = index(["sira", "no", "order"])
+        let partIndex = index(["parca", "part"])
+        let speakerIndex = index(["konusmaci", "speaker", "kisi"])
+        let startIndex = index(["baslangic", "start"])
+        let endIndex = index(["bitis", "end"])
+        let textIndex = index(["metin", "text", "transkript", "ifade"]) ?? max(0, header.count - 1)
 
         return table.dropFirst().enumerated().compactMap { offset, row in
             func value(_ i: Int?) -> String {
@@ -87,8 +87,9 @@ enum TranscriptImporter {
     }
 
     private static func normalizeHeader(_ value: String) -> String {
-        value.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "en_US"))
-            .lowercased(with: Locale(identifier: "en_US"))
+        value.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
+            .lowercased(with: Locale(identifier: "tr_TR"))
+            .replacingOccurrences(of: "ı", with: "i")
             .replacingOccurrences(of: "_", with: "")
             .replacingOccurrences(of: " ", with: "")
     }

@@ -9,55 +9,55 @@ struct ParticipantDirectoryView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Participants").font(.title2).fontWeight(.semibold)
-                    Text("Each participant is stored with their transcript and demographic information.")
+                    Text("Katılımcılar").font(.title2).fontWeight(.semibold)
+                    Text("Her katılımcı kendi transkripti ve demografik bilgileriyle saklanır.")
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
             }.padding(16)
 
             Table(store.project.interviews, selection: $store.selectedInterviewID) {
-                TableColumn("Participant") { interview in
+                TableColumn("Katılımcı") { interview in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(interview.participant).fontWeight(.medium)
                         Text(interview.name).font(.caption).foregroundStyle(.secondary)
                     }
                 }.width(min: 150, ideal: 210)
-                TableColumn("Gender") { interview in
+                TableColumn("Cinsiyet") { interview in
                     Text(verbatim: AppLocalization.string(interview.participantDetails?.gender.nilIfEmpty ?? "—"))
                 }
                     .width(min: 80, ideal: 100)
-                TableColumn("Age") { interview in Text(interview.participantDetails?.age.nilIfEmpty ?? "—") }
+                TableColumn("Yaş") { interview in Text(interview.participantDetails?.age.nilIfEmpty ?? "—") }
                     .width(55)
-                TableColumn("Education") { interview in Text(interview.participantDetails?.education.nilIfEmpty ?? "—") }
+                TableColumn("Eğitim") { interview in Text(interview.participantDetails?.education.nilIfEmpty ?? "—") }
                     .width(min: 120, ideal: 170)
-                TableColumn("Occupation") { interview in Text(interview.participantDetails?.occupation.nilIfEmpty ?? "—") }
+                TableColumn("Meslek") { interview in Text(interview.participantDetails?.occupation.nilIfEmpty ?? "—") }
                     .width(min: 120, ideal: 170)
-                TableColumn("Transcript") { interview in
-                    Text(interview.segments.count.formatted()) + Text(" row(s)")
+                TableColumn("Transkript") { interview in
+                    Text(interview.segments.count.formatted()) + Text(" satır")
                 }
                     .width(90)
-                TableColumn("Coding") { interview in Text(interview.codingUnits.count.formatted()) }
+                TableColumn("Kodlama") { interview in Text(interview.codingUnits.count.formatted()) }
                     .width(70)
                 TableColumn("") { interview in
                     Button {
                         editingInterview = interview
                     } label: {
-                        Label("Edit", systemImage: "pencil")
+                        Label("Düzenle", systemImage: "pencil")
                             .labelStyle(.iconOnly)
                     }
                     .buttonStyle(.borderless)
-                    .help("\(interview.participant) · \(AppLocalization.string("Edit details"))")
-                    .accessibilityLabel("\(AppLocalization.string("Edit participant")): \(interview.participant)")
+                    .help("\(interview.participant) · \(AppLocalization.string("Bilgileri düzenle"))")
+                    .accessibilityLabel("\(AppLocalization.string("Katılımcıyı düzenle")): \(interview.participant)")
                 }
                 .width(38)
             }
             .overlay {
                 if store.project.interviews.isEmpty {
                     ContentUnavailableView(
-                        "No participants yet",
+                        "Henüz katılımcı yok",
                         systemImage: "person.crop.circle.badge.plus",
-                        description: Text("Add the first participant and transcript.")
+                        description: Text("İlk katılımcıyı ve transkriptini ekleyin.")
                     )
                 }
             }
@@ -103,8 +103,8 @@ struct ParticipantCreationView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Add Participant").font(.title2).fontWeight(.semibold)
-                    Text("Enter participant details, then continue with a transcript or audio recording.")
+                    Text("Katılımcı Ekle").font(.title2).fontWeight(.semibold)
+                    Text("Kişi bilgilerini girin; hazır transkript veya ses kaydıyla devam edin.")
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -117,8 +117,8 @@ struct ParticipantCreationView: View {
                 VStack(alignment: .leading, spacing: 22) {
                     ParticipantInformationFields(name: $name, details: $details)
 
-                    FormSection(title: "Interview Source", description: "Upload a transcript or convert audio to text with speaker and time information.") {
-                        Picker("Source Type", selection: $source) {
+                    FormSection(title: "Görüşme kaynağı", description: "Hazır bir transkript yükleyin veya ses kaydını konuşmacı ve zaman bilgileriyle metne dönüştürün.") {
+                        Picker("Kaynak türü", selection: $source) {
                             ForEach(ParticipantTranscriptSource.allCases) { option in
                                 Label { Text(LocalizedStringKey(option.rawValue)) } icon: { Image(systemName: option.symbol) }.tag(option)
                             }
@@ -142,10 +142,10 @@ struct ParticipantCreationView: View {
             }
             Divider()
             HStack {
-                Button("Cancel") { onCancel() }.keyboardShortcut(.cancelAction)
+                Button("Vazgeç") { onCancel() }.keyboardShortcut(.cancelAction)
                 Spacer()
                 if store.isImporting || isTranscribing { ProgressView().controlSize(.small) }
-                Button("Save and Start Coding") {
+                Button("Kaydet ve Kodlamaya Geç") {
                     saveParticipant()
                 }
                 .buttonStyle(.borderedProminent)
@@ -179,13 +179,13 @@ struct ParticipantCreationView: View {
                 errorMessage = error.localizedDescription
             }
         }
-        .alert("The operation could not be completed", isPresented: Binding(
+        .alert("İşlem tamamlanamadı", isPresented: Binding(
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
         )) {
-            Button("OK", role: .cancel) { errorMessage = nil }
+            Button("Tamam", role: .cancel) { errorMessage = nil }
         } message: {
-            Text(verbatim: AppLocalization.string(errorMessage ?? "Unknown error"))
+            Text(verbatim: AppLocalization.string(errorMessage ?? "Bilinmeyen hata"))
         }
         .task {
             hasOpenAIAPIKey = !OpenAIAPIKeyStore.load().isEmpty
@@ -197,13 +197,13 @@ struct ParticipantCreationView: View {
             Image(systemName: transcriptURL == nil ? "doc.badge.plus" : "checkmark.circle.fill")
                 .font(.title2).foregroundStyle(transcriptURL == nil ? Color.secondary : Color.green)
             VStack(alignment: .leading, spacing: 3) {
-                Text(transcriptURL?.lastPathComponent ?? "No file selected")
+                Text(transcriptURL?.lastPathComponent ?? "Henüz dosya seçilmedi")
                     .fontWeight(.medium).lineLimit(1)
-                Text("XLSX, CSV, or TSV")
+                Text("XLSX, CSV veya TSV")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Button(transcriptURL == nil ? "Choose Transcript…" : "Change File…") {
+            Button(transcriptURL == nil ? "Transkript Seç…" : "Dosyayı Değiştir…") {
                 showTranscriptImporter = true
             }
         }
@@ -217,12 +217,12 @@ struct ParticipantCreationView: View {
                 Image(systemName: audioURL == nil ? "waveform.badge.plus" : "checkmark.circle.fill")
                     .font(.title2).foregroundStyle(audioURL == nil ? Color.secondary : Color.green)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(audioURL?.lastPathComponent ?? "No audio file selected")
+                    Text(audioURL?.lastPathComponent ?? "Henüz ses dosyası seçilmedi")
                         .fontWeight(.medium).lineLimit(1)
                     Text(audioMetadata).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button(audioURL == nil ? "Choose Audio…" : "Change File…") {
+                Button(audioURL == nil ? "Ses Kaydı Seç…" : "Dosyayı Değiştir…") {
                     showAudioImporter = true
                 }
             }
@@ -231,7 +231,7 @@ struct ParticipantCreationView: View {
 
             HStack(spacing: 10) {
                 Label(
-                    hasOpenAIAPIKey ? "OpenAI API key is ready" : "OpenAI API key required",
+                    hasOpenAIAPIKey ? "OpenAI API anahtarı hazır" : "OpenAI API anahtarı gerekli",
                     systemImage: hasOpenAIAPIKey ? "checkmark.shield.fill" : "key.slash"
                 )
                 .font(.callout)
@@ -239,7 +239,7 @@ struct ParticipantCreationView: View {
                 Spacer()
                 if !hasOpenAIAPIKey {
                     SettingsLink {
-                        Label("Open Settings", systemImage: "gearshape")
+                        Label("Ayarları Aç", systemImage: "gearshape")
                     }
                 }
             }
@@ -247,14 +247,14 @@ struct ParticipantCreationView: View {
             if isTranscribing {
                 HStack(spacing: 10) {
                     ProgressView().controlSize(.small)
-                    Text("Detecting speakers and time ranges…")
+                    Text("Konuşmacılar ve zaman aralıkları çıkarılıyor…")
                         .font(.callout).foregroundStyle(.secondary)
                 }
             } else if transcriptionResult == nil {
                 Button {
                     transcribeAudio()
                 } label: {
-                    Label("Transcribe Audio", systemImage: "waveform.and.mic")
+                    Label("Sesi Metne Dönüştür", systemImage: "waveform.and.mic")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -265,11 +265,11 @@ struct ParticipantCreationView: View {
             if let result = transcriptionResult {
                 speakerMapping(result)
                 transcriptPreview(result)
-                Button("Transcribe Again") { transcribeAudio() }
+                Button("Transkripsiyonu Yeniden Oluştur") { transcribeAudio() }
                     .disabled(isTranscribing)
             }
 
-            Label("The selected audio file is sent to the OpenAI API. The API key is stored in this Mac's app settings.", systemImage: "lock.shield")
+            Label("Seçtiğiniz ses dosyası OpenAI API’ye gönderilir. API anahtarı bu Mac’teki uygulama ayarlarında tutulur.", systemImage: "lock.shield")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .padding(14)
@@ -278,15 +278,15 @@ struct ParticipantCreationView: View {
 
     private func speakerMapping(_ result: OpenAITranscriptionResult) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Assign Speakers").font(.callout).fontWeight(.semibold)
-            Text("Name changes apply to all related transcript rows.")
+            Text("Konuşmacıları eşleştir").font(.callout).fontWeight(.semibold)
+            Text("Ad değişikliği ilgili bütün transkript satırlarına uygulanır.")
                 .font(.caption).foregroundStyle(.secondary)
             ForEach(Array(result.speakers.enumerated()), id: \.element) { index, speaker in
                 HStack(spacing: 10) {
                     Circle().fill(SpeakerPalette.color(index)).frame(width: 8, height: 8)
                     Text(speaker).font(.caption).monospaced().frame(width: 80, alignment: .leading)
                     Image(systemName: "arrow.right").foregroundStyle(.secondary)
-                    TextField("Speaker name", text: Binding(
+                    TextField("Konuşmacı adı", text: Binding(
                         get: { speakerNames[speaker] ?? "" },
                         set: { speakerNames[speaker] = $0 }
                     ))
@@ -299,9 +299,9 @@ struct ParticipantCreationView: View {
     private func transcriptPreview(_ result: OpenAITranscriptionResult) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Text("Speaker").frame(width: 115, alignment: .leading)
-                Text("Time").frame(width: 100, alignment: .leading)
-                Text("Text").frame(maxWidth: .infinity, alignment: .leading)
+                Text("Konuşmacı").frame(width: 115, alignment: .leading)
+                Text("Zaman").frame(width: 100, alignment: .leading)
+                Text("Metin").frame(maxWidth: .infinity, alignment: .leading)
             }
             .font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
             .padding(.horizontal, 10).padding(.vertical, 7).background(.bar)
@@ -339,7 +339,7 @@ struct ParticipantCreationView: View {
         let didAccess = audioURL.startAccessingSecurityScopedResource()
         defer { if didAccess { audioURL.stopAccessingSecurityScopedResource() } }
         let bytes = (try? audioURL.resourceValues(forKeys: [.fileSizeKey]).fileSize).flatMap { $0 }.map(Int64.init)
-        return bytes.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "Could not read file size"
+        return bytes.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "Dosya boyutu okunamadı"
     }
 
     private func transcribeAudio() {
@@ -347,7 +347,7 @@ struct ParticipantCreationView: View {
         let apiKey = OpenAIAPIKeyStore.load()
         guard !apiKey.isEmpty else {
             hasOpenAIAPIKey = false
-            errorMessage = "Save your OpenAI API key in Settings first."
+            errorMessage = "OpenAI API anahtarını önce Ayarlar’dan kaydedin."
             return
         }
         isTranscribing = true
@@ -362,7 +362,7 @@ struct ParticipantCreationView: View {
                 speakerNames = suggestedSpeakerNames(for: result.speakers)
             } catch {
                 errorMessage = error.localizedDescription
-                store.lastMessage = "Audio transcription failed: \(error.localizedDescription)"
+                store.lastMessage = "Ses transkripsiyonu başarısız: \(error.localizedDescription)"
             }
             isTranscribing = false
         }
@@ -371,7 +371,7 @@ struct ParticipantCreationView: View {
     private func suggestedSpeakerNames(for speakers: [String]) -> [String: String] {
         let participant = name.trimmingCharacters(in: .whitespacesAndNewlines)
         return Dictionary(uniqueKeysWithValues: speakers.enumerated().map { index, speaker in
-            let suggestion = index == 0 ? "Interviewer" : index == 1 ? participant : "Speaker \(index + 1)"
+            let suggestion = index == 0 ? "Görüşmeci" : index == 1 ? participant : "Konuşmacı \(index + 1)"
             return (speaker, suggestion)
         })
     }
@@ -441,10 +441,10 @@ private struct ParticipantEditView: View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Edit Participant")
+                    Text("Katılımcıyı Düzenle")
                         .font(.title2)
                         .fontWeight(.semibold)
-                    Text("Update identity and demographic details. Transcript and coding are preserved.")
+                    Text("Kimlik ve demografik bilgileri güncelleyin. Transkript ve kodlamalar korunur.")
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -453,7 +453,7 @@ private struct ParticipantEditView: View {
                 }
                 .buttonStyle(.borderless)
                 .keyboardShortcut(.cancelAction)
-                .help("Close")
+                .help("Kapat")
             }
             .padding(20)
 
@@ -463,11 +463,11 @@ private struct ParticipantEditView: View {
                 VStack(alignment: .leading, spacing: 22) {
                     ParticipantInformationFields(name: $participantName, details: $details)
                     FormSection(
-                        title: "Interview",
-                        description: "This name appears in source lists and interview selectors."
+                        title: "Görüşme",
+                        description: "Bu ad kaynak listesinde ve görüşme seçimlerinde görünür."
                     ) {
-                        FormField(title: "Interview name", required: true) {
-                            TextField("e.g. Participant B Transcript", text: $interviewName)
+                        FormField(title: "Görüşme adı", required: true) {
+                            TextField("Örn. Fatma Transkripti", text: $interviewName)
                                 .textFieldStyle(.roundedBorder)
                         }
                     }
@@ -477,10 +477,10 @@ private struct ParticipantEditView: View {
 
             Divider()
             HStack {
-                Button("Cancel") { dismiss() }
+                Button("Vazgeç") { dismiss() }
                     .keyboardShortcut(.cancelAction)
                 Spacer()
-                Button("Save Changes") {
+                Button("Değişiklikleri Kaydet") {
                     if store.updateParticipant(
                         interviewID: interviewID,
                         participantName: participantName,
@@ -506,24 +506,24 @@ private struct ParticipantInformationFields: View {
 
     var body: some View {
         Group {
-            FormSection(title: "Participant Details", description: "Only the participant name is required.") {
+            FormSection(title: "Katılımcı bilgileri", description: "Yalnızca katılımcı adı zorunludur.") {
                 Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 14) {
                     GridRow {
-                        FormField(title: "Participant name", required: true, hint: "You can use a code or pseudonym instead of a real name.") {
-                            TextField("e.g. Participant B or P-02", text: $name).textFieldStyle(.roundedBorder)
+                        FormField(title: "Katılımcı adı", required: true, hint: "Gerçek ad yerine kod veya takma ad kullanabilirsiniz.") {
+                            TextField("Örn. Fatma veya K-02", text: $name).textFieldStyle(.roundedBorder)
                         }
-                        FormField(title: "Age", hint: "Optional") {
-                            TextField("e.g. 34", text: $details.age).textFieldStyle(.roundedBorder).frame(maxWidth: 140)
+                        FormField(title: "Yaş", hint: "İsteğe bağlı") {
+                            TextField("Örn. 34", text: $details.age).textFieldStyle(.roundedBorder).frame(maxWidth: 140)
                         }
                     }
                     GridRow {
-                        FormField(title: "Gender", hint: "Optional") {
+                        FormField(title: "Cinsiyet", hint: "İsteğe bağlı") {
                             Picker("", selection: $details.gender) {
-                                Text("Not selected").tag("")
-                                Text("Woman").tag("Woman")
-                                Text("Man").tag("Man")
+                                Text("Seçilmedi").tag("")
+                                Text("Kadın").tag("Kadın")
+                                Text("Erkek").tag("Erkek")
                                 Text("Non-binary").tag("Non-binary")
-                                Text("Prefer not to say").tag("Prefer not to say")
+                                Text("Belirtmek istemiyor").tag("Belirtmek istemiyor")
                             }
                             .labelsHidden()
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -533,51 +533,51 @@ private struct ParticipantInformationFields: View {
                 }
             }
 
-            FormSection(title: "Demographic Information", description: "Complete the fields relevant to your research; all are optional.") {
+            FormSection(title: "Demografik bilgiler", description: "Araştırmanız için gerekli alanları doldurun; tümü isteğe bağlıdır.") {
                 Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 14) {
                     GridRow {
-                        FormField(title: "Education") {
-                            TextField("e.g. Bachelor's degree", text: $details.education).textFieldStyle(.roundedBorder)
+                        FormField(title: "Eğitim durumu") {
+                            TextField("Örn. Lisans", text: $details.education).textFieldStyle(.roundedBorder)
                         }
-                        FormField(title: "Occupation") {
-                            TextField("e.g. Teacher", text: $details.occupation).textFieldStyle(.roundedBorder)
+                        FormField(title: "Meslek") {
+                            TextField("Örn. Öğretmen", text: $details.occupation).textFieldStyle(.roundedBorder)
                         }
                     }
                     GridRow {
-                        FormField(title: "City / Region") {
-                            TextField("e.g. London", text: $details.location).textFieldStyle(.roundedBorder)
+                        FormField(title: "Şehir / bölge") {
+                            TextField("Örn. İstanbul", text: $details.location).textFieldStyle(.roundedBorder)
                         }
-                        FormField(title: "Employment Status") {
+                        FormField(title: "Çalışma durumu") {
                             Picker("", selection: $details.employmentStatus) {
-                                Text("Not selected").tag("")
-                                Text("Employed full-time").tag("Employed full-time")
-                                Text("Employed part-time").tag("Employed part-time")
-                                Text("Self-employed").tag("Self-employed")
-                                Text("Student").tag("Student")
-                                Text("Not employed").tag("Not employed")
-                                Text("Retired").tag("Retired")
+                                Text("Seçilmedi").tag("")
+                                Text("Tam zamanlı çalışıyor").tag("Tam zamanlı çalışıyor")
+                                Text("Yarı zamanlı çalışıyor").tag("Yarı zamanlı çalışıyor")
+                                Text("Serbest çalışıyor").tag("Serbest çalışıyor")
+                                Text("Öğrenci").tag("Öğrenci")
+                                Text("Çalışmıyor").tag("Çalışmıyor")
+                                Text("Emekli").tag("Emekli")
                             }
                             .labelsHidden()
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
                     GridRow {
-                        FormField(title: "Sector / Organization") {
-                            TextField("e.g. Education / Public sector", text: $details.sector).textFieldStyle(.roundedBorder)
+                        FormField(title: "Sektör / kurum") {
+                            TextField("Örn. Eğitim / devlet", text: $details.sector).textFieldStyle(.roundedBorder)
                         }
-                        FormField(title: "Professional Experience") {
-                            TextField("e.g. 8 years", text: $details.experienceYears).textFieldStyle(.roundedBorder)
+                        FormField(title: "Mesleki deneyim") {
+                            TextField("Örn. 8 yıl", text: $details.experienceYears).textFieldStyle(.roundedBorder)
                         }
                     }
                     GridRow {
-                        FormField(title: "Marital Status") {
+                        FormField(title: "Medeni durum") {
                             Picker("", selection: $details.maritalStatus) {
-                                Text("Not selected").tag("")
-                                Text("Single").tag("Single")
-                                Text("Married").tag("Married")
-                                Text("Divorced").tag("Divorced")
-                                Text("Widowed").tag("Widowed")
-                                Text("Prefer not to say").tag("Prefer not to say")
+                                Text("Seçilmedi").tag("")
+                                Text("Bekâr").tag("Bekâr")
+                                Text("Evli").tag("Evli")
+                                Text("Boşanmış").tag("Boşanmış")
+                                Text("Dul").tag("Dul")
+                                Text("Belirtmek istemiyor").tag("Belirtmek istemiyor")
                             }
                             .labelsHidden()
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -585,8 +585,8 @@ private struct ParticipantInformationFields: View {
                         Color.clear.frame(height: 1)
                     }
                 }
-                FormField(title: "Researcher Note", hint: "Contextual or methodological notes about the participant") {
-                    TextField("Optional note", text: $details.notes, axis: .vertical)
+                FormField(title: "Araştırmacı notu", hint: "Katılımcıya ilişkin bağlamsal veya yöntemsel notlar") {
+                    TextField("İsteğe bağlı not", text: $details.notes, axis: .vertical)
                         .textFieldStyle(.roundedBorder).lineLimit(2...4)
                 }
             }
@@ -595,8 +595,8 @@ private struct ParticipantInformationFields: View {
 }
 
 private enum ParticipantTranscriptSource: String, CaseIterable, Identifiable {
-    case transcriptFile = "Transcript File"
-    case audioFile = "Audio Recording"
+    case transcriptFile = "Transkript Dosyası"
+    case audioFile = "Ses Kaydı"
 
     var id: String { rawValue }
     var symbol: String {
@@ -644,7 +644,7 @@ private struct FormField<Content: View>: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 3) {
                 Text(LocalizedStringKey(title)).font(.callout).fontWeight(.medium)
-                if required { Text("*").foregroundStyle(.red).accessibilityLabel(Text("required")) }
+                if required { Text("*").foregroundStyle(.red).accessibilityLabel(Text("zorunlu")) }
             }
             content
             if !hint.isEmpty {

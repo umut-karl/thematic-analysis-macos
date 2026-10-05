@@ -3,6 +3,7 @@
 A native, local-first macOS application for organizing interview transcripts,
 coding qualitative data, developing hierarchical themes, and comparing findings
 across participants.
+The interface can be switched between English and Turkish from Settings.
 
 ## Highlights
 
@@ -16,6 +17,15 @@ across participants.
 - Explore a collapsible theme map with linked evidence and analytic notes.
 - Compare cases using dominance, content analysis, Miles–Huberman,
   participant prevalence, and Framework Matrix views.
+- Ask an evidence-linked AI analysis assistant questions using method-neutral,
+  reflexive, codebook, framework, or coding-reliability profiles. Responses
+  retain model and prompt provenance, reject unknown evidence IDs, and can be
+  saved as Markdown memos with an audit trail.
+- Define a project analysis brief, data scope, theme or interview focus, and
+  surrounding transcript context from the dedicated Context workspace.
+- Continue from clickable follow-up questions and record each AI response as
+  accepted, needing revision, or rejected without converting it into a human
+  analytic decision automatically.
 - Create and restore complete project backups.
 
 ## Built-in demo
@@ -45,6 +55,8 @@ The application is designed to keep research data under the user's control:
 
 - Projects and imported transcripts are stored locally on the Mac.
 - Audio is sent to OpenAI only when the user explicitly starts transcription.
+- Project themes, coded excerpts, memos, and explicitly attached files are sent
+  to OpenAI only when the user submits a question to the analysis assistant.
 - The OpenAI API key is stored in the macOS Keychain and is not included in
   projects, backups, logs, or this repository.
 - This repository contains only synthetic sample content. It does not include
@@ -59,7 +71,7 @@ apply to their data.
 
 - macOS 14 or later
 - Swift 6 toolchain
-- An OpenAI API key only when audio transcription is used
+- An OpenAI API key only when audio transcription or the analysis assistant is used
 
 ## Build and run
 
@@ -75,6 +87,36 @@ Run the test suite with:
 ```sh
 swift test
 ```
+
+## Web version
+
+The browser version lives in `web/`. It is a TypeScript/React client using the
+same JSON project schema as the native application. Projects are stored as
+independent, versioned IndexedDB records and can open native JSON/ZIP backups.
+It includes transcript import, speaker mapping, multi-theme coding and memos,
+data-derived analytics, an evidence-linked theme map, XLSX export, dark
+appearance, and responsive layouts.
+
+```sh
+cd web
+npm install
+npm run dev
+```
+
+On macOS, the local web gateway can use the OpenAI API key saved by the native
+app. On other hosts, start it with `OPENAI_API_KEY` set in the server
+environment. The browser never receives the key. Run all web checks with
+`npm run check`.
+
+The local-first architecture and credential boundary are documented in
+[`web/docs/ADR-001-local-first-web.md`](web/docs/ADR-001-local-first-web.md).
+
+## Language
+
+Open **Settings → Language** and choose **English** or **Türkçe**. Existing
+participant names, transcript text, project names, and researcher-authored
+theme names remain unchanged because they are research data rather than
+interface copy.
 
 ## Data files
 

@@ -16,10 +16,10 @@ struct QuoteExportRow {
 enum ExportService {
     static func readProject(at url: URL) throws -> AnalysisProject {
         if url.pathExtension.lowercased() == "json" {
-            return try JSONDecoder.thematic.decode(AnalysisProject.self, from: Data(contentsOf: url))
+            return try JSONDecoder.tematik.decode(AnalysisProject.self, from: Data(contentsOf: url))
         }
         guard url.pathExtension.lowercased() == "zip" else {
-            throw NSError(domain: "ThematicAnalysis.Export", code: 2, userInfo: [NSLocalizedDescriptionKey: AppLocalization.string("Choose a ZIP or JSON project backup.")])
+            throw NSError(domain: "ThematicAnalysis.Export", code: 2, userInfo: [NSLocalizedDescriptionKey: AppLocalization.string("ZIP veya JSON proje yedeği seçin.")])
         }
         let temporaryRoot = FileManager.default.temporaryDirectory.appendingPathComponent("ThematicAnalysis-Import-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: temporaryRoot, withIntermediateDirectories: true)
@@ -29,19 +29,22 @@ enum ExportService {
         process.arguments = ["-qq", url.path, "-d", temporaryRoot.path]
         try process.run(); process.waitUntilExit()
         guard process.terminationStatus == 0 else {
-            throw NSError(domain: "ThematicAnalysis.Export", code: 3, userInfo: [NSLocalizedDescriptionKey: AppLocalization.string("The ZIP backup could not be opened.")])
+            throw NSError(domain: "ThematicAnalysis.Export", code: 3, userInfo: [NSLocalizedDescriptionKey: AppLocalization.string("ZIP yedeği açılamadı.")])
         }
         let enumerator = FileManager.default.enumerator(at: temporaryRoot, includingPropertiesForKeys: nil)
-        guard let projectURL = (enumerator?.allObjects as? [URL])?.first(where: { $0.lastPathComponent == "Project-Data.json" }) else {
-            throw NSError(domain: "ThematicAnalysis.Export", code: 4, userInfo: [NSLocalizedDescriptionKey: AppLocalization.string("Project-Data.json was not found in the archive.")])
+        let compatibleProjectFilenames = ["Project-Data.json", "Proje-Verisi.json"]
+        guard let projectURL = (enumerator?.allObjects as? [URL])?.first(where: {
+            compatibleProjectFilenames.contains($0.lastPathComponent)
+        }) else {
+            throw NSError(domain: "ThematicAnalysis.Export", code: 4, userInfo: [NSLocalizedDescriptionKey: AppLocalization.string("Arşivde proje verisi bulunamadı.")])
         }
-        return try JSONDecoder.thematic.decode(AnalysisProject.self, from: Data(contentsOf: projectURL))
+        return try JSONDecoder.tematik.decode(AnalysisProject.self, from: Data(contentsOf: projectURL))
     }
 
     static func exportQuotes(_ rows: [QuoteExportRow]) throws -> URL? {
         let panel = NSSavePanel()
-        panel.title = AppLocalization.string("Export Coded Excerpts")
-        panel.nameFieldStringValue = AppLocalization.string("Coded-Excerpts.csv")
+        panel.title = AppLocalization.string("Kodlanmış Alıntıları Dışa Aktar")
+        panel.nameFieldStringValue = AppLocalization.string("Kodlanmis-Alintilar.csv")
         panel.allowedContentTypes = [.commaSeparatedText]
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
         try csvForQuotes(rows).write(to: url, atomically: true, encoding: .utf8)
@@ -50,8 +53,8 @@ enum ExportService {
 
     static func exportTranscriptXLSX(_ interview: Interview) throws -> URL? {
         let panel = NSSavePanel()
-        panel.title = AppLocalization.string("Export Transcript to Excel")
-        panel.nameFieldStringValue = "\(safeName(interview.participant))-\(AppLocalization.string("Transcript")).xlsx"
+        panel.title = AppLocalization.string("Transkripti Excel Olarak Dışa Aktar")
+        panel.nameFieldStringValue = "\(safeName(interview.participant))-\(AppLocalization.string("Transkript")).xlsx"
         if let xlsx = UTType(filenameExtension: "xlsx") {
             panel.allowedContentTypes = [xlsx]
         }
@@ -102,41 +105,41 @@ enum ExportService {
             throw NSError(
                 domain: "ThematicAnalysis.Export",
                 code: Int(process.terminationStatus),
-                userInfo: [NSLocalizedDescriptionKey: AppLocalization.string("The Excel file could not be created.")]
+                userInfo: [NSLocalizedDescriptionKey: AppLocalization.string("Excel dosyası oluşturulamadı.")]
             )
         }
     }
 
     static func exportProjectArchive(store: AnalysisStore) throws -> URL? {
         let panel = NSSavePanel()
-        panel.title = AppLocalization.string("Export Full Project")
+        panel.title = AppLocalization.string("Tüm Projeyi Dışa Aktar")
         panel.nameFieldStringValue = "\(safeName(store.project.name)).zip"
         panel.allowedContentTypes = [.zip]
         guard panel.runModal() == .OK, let destination = panel.url else { return nil }
 
         let temporaryRoot = FileManager.default.temporaryDirectory.appendingPathComponent("ThematicAnalysis-Export-\(UUID().uuidString)")
         let bundle = temporaryRoot.appendingPathComponent(safeName(store.project.name), isDirectory: true)
-        let transcripts = bundle.appendingPathComponent("Transcripts", isDirectory: true)
+        let transcripts = bundle.appendingPathComponent("Transkriptler", isDirectory: true)
         try FileManager.default.createDirectory(at: transcripts, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: temporaryRoot) }
 
-        let participants = [["Participant", "Interview", "Gender", "Age", "Education", "Occupation", "City/Region", "Notes", "Row", "Coding"]]
+        let participants = [["Katılımcı", "Görüşme", "Cinsiyet", "Yaş", "Eğitim", "Meslek", "Şehir/Bölge", "Notlar", "Satır", "Kodlama"]]
             + store.project.interviews.map { interview in
                 let details = interview.participantDetails
                 return [interview.participant, interview.name, details?.gender ?? "", details?.age ?? "", details?.education ?? "", details?.occupation ?? "", details?.location ?? "", details?.notes ?? "", "\(interview.segments.count)", "\(interview.codingUnits.count)"]
             }
-        try csv(participants).write(to: bundle.appendingPathComponent("Participants.csv"), atomically: true, encoding: .utf8)
+        try csv(participants).write(to: bundle.appendingPathComponent("Katilimcilar.csv"), atomically: true, encoding: .utf8)
 
-        let themeRows = [["Theme ID", "Parent Theme ID", "Theme Path", "Theme Narrative"]]
+        let themeRows = [["Tema Kimliği", "Üst Tema Kimliği", "Tema Yolu", "Tema Anlatısı"]]
             + store.project.themes.map { [$0.id.uuidString, $0.parentID?.uuidString ?? "", store.themePathName(for: $0.id), $0.note ?? ""] }
-        try csv(themeRows).write(to: bundle.appendingPathComponent("Theme-Tree.csv"), atomically: true, encoding: .utf8)
+        try csv(themeRows).write(to: bundle.appendingPathComponent("Tema-Agaci.csv"), atomically: true, encoding: .utf8)
 
         var quoteRows: [QuoteExportRow] = []
         for interview in store.project.interviews {
-            let transcriptRows = [["Row", "Part", "Speaker", "Start", "End", "Text"]]
+            let transcriptRows = [["Sıra", "Parça", "Konuşmacı", "Başlangıç", "Bitiş", "Metin"]]
                 + interview.segments.map { ["\($0.order)", $0.part.map(String.init) ?? "", $0.speaker, $0.start, $0.end, $0.text] }
             try csv(transcriptRows).write(
-                to: transcripts.appendingPathComponent("\(safeName(interview.participant))-Transcript.csv"),
+                to: transcripts.appendingPathComponent("\(safeName(interview.participant))-Transkript.csv"),
                 atomically: true,
                 encoding: .utf8
             )
@@ -153,8 +156,15 @@ enum ExportService {
                 ))
             }
         }
-        try csvForQuotes(quoteRows).write(to: bundle.appendingPathComponent("Coded-Excerpts.csv"), atomically: true, encoding: .utf8)
-        try JSONEncoder.thematic.encode(store.project).write(to: bundle.appendingPathComponent("Project-Data.json"), options: .atomic)
+        try csvForQuotes(quoteRows).write(to: bundle.appendingPathComponent("Kodlanmis-Alintilar.csv"), atomically: true, encoding: .utf8)
+        try JSONEncoder.tematik.encode(store.project).write(to: bundle.appendingPathComponent("Project-Data.json"), options: .atomic)
+        let assistantArtifacts = store.storageRoot.appendingPathComponent("AnalizAsistani", isDirectory: true)
+        if FileManager.default.fileExists(atPath: assistantArtifacts.path) {
+            try FileManager.default.copyItem(
+                at: assistantArtifacts,
+                to: bundle.appendingPathComponent("AnalizAsistani", isDirectory: true)
+            )
+        }
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
@@ -162,13 +172,13 @@ enum ExportService {
         try process.run()
         process.waitUntilExit()
         guard process.terminationStatus == 0 else {
-            throw NSError(domain: "ThematicAnalysis.Export", code: Int(process.terminationStatus), userInfo: [NSLocalizedDescriptionKey: AppLocalization.string("The ZIP archive could not be created.")])
+            throw NSError(domain: "ThematicAnalysis.Export", code: Int(process.terminationStatus), userInfo: [NSLocalizedDescriptionKey: AppLocalization.string("ZIP arşivi oluşturulamadı.")])
         }
         return destination
     }
 
     private static func csvForQuotes(_ rows: [QuoteExportRow]) -> String {
-        csv([["Participant", "Interview", "Speaker", "Time", "Excerpt", "Theme Paths", "Analytic Note"]]
+        csv([["Katılımcı", "Görüşme", "Konuşmacı", "Zaman", "Alıntı", "Tema Yolları", "Analitik Not"]]
             + rows.map { [$0.participant, $0.interview, $0.speaker, $0.time, $0.text, $0.themes, $0.memo] })
     }
 
@@ -186,7 +196,7 @@ enum ExportService {
     }
 
     private static func worksheetXML(for interview: Interview) -> String {
-        let headers = ["Row", "Part", "Speaker", "Start", "End", "Text"]
+        let headers = ["Sıra", "Parça", "Konuşmacı", "Başlangıç", "Bitiş", "Metin"]
         let headerCells = headers.enumerated().map { index, value in
             inlineCell(column: index, row: 1, value: value, style: 1)
         }.joined()
@@ -286,7 +296,7 @@ enum ExportService {
 
     private static let workbookXML = xmlHeader + """
     <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-      <sheets><sheet name="Transcript" sheetId="1" r:id="rId1"/></sheets>
+      <sheets><sheet name="Transkript" sheetId="1" r:id="rId1"/></sheets>
     </workbook>
     """
 
@@ -330,12 +340,12 @@ enum ExportService {
     }
 
     private static let appPropertiesXML = xmlHeader + """
-    <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>Thematic Analysis</Application></Properties>
+    <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>Tematik Analiz</Application></Properties>
     """
 
     private static func corePropertiesXML(title: String) -> String {
         xmlHeader + """
-        <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>\(xmlEscaped(title))</dc:title><dc:creator>Thematic Analysis</dc:creator></cp:coreProperties>
+        <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>\(xmlEscaped(title))</dc:title><dc:creator>Tematik Analiz</dc:creator></cp:coreProperties>
         """
     }
 }

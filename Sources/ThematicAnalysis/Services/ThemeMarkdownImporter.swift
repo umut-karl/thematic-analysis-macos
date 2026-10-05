@@ -9,7 +9,7 @@ enum ThemeMarkdownImporter {
         for rawLine in markdown.components(separatedBy: .newlines) {
             let line = rawLine.replacingOccurrences(of: "\r", with: "")
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty, trimmed != "# Themes" else { continue }
+            guard !trimmed.isEmpty, trimmed != "# Temalar" else { continue }
 
             let level: Int
             let name: String

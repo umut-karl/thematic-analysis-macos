@@ -98,24 +98,33 @@ struct AnalysisProject: Codable {
     var interviews: [Interview]
     var themes: [ThemeNode]
     var updatedAt: Date = .now
+    var analysisMethodProfile: AnalysisMethodProfile? = nil
 }
 
 enum WorkspaceSection: String, CaseIterable, Identifiable {
-    case addParticipant = "Add Participant"
-    case participants = "Participants"
-    case transcript = "Transcript"
-    case coding = "Coding"
-    case coded = "Coded Excerpts"
-    case overview = "All Interviews"
-    case map = "Theme Map"
-    case profile = "Dominance Profile"
-    case frequency = "Content Analysis"
-    case milesMatrix = "Miles–Huberman Matrix"
-    case prevalence = "Participant Prevalence"
+    case addParticipant = "Katılımcı Ekle"
+    case participants = "Katılımcılar"
+    case transcript = "Transkript"
+    case coding = "Kodlama"
+    case coded = "Kodlanmış Alıntılar"
+    case overview = "Tüm Görüşmeler"
+    case map = "Tema Haritası"
+    case assistant = "Analiz Asistanı"
+    case analysisContext = "Bağlam"
+    case savedAnalyses = "Kaydedilen Analizler"
+    case profile = "Baskınlık Profili"
+    case frequency = "İçerik Analizi"
+    case milesMatrix = "Miles–Huberman Matrisi"
+    case prevalence = "Katılımcı Yaygınlığı"
     case frameworkMatrix = "Framework Matrix"
 
     var id: String { rawValue }
-    var localizedTitle: LocalizedStringKey { LocalizedStringKey(rawValue) }
+    var localizedTitle: LocalizedStringKey {
+        switch self {
+        case .assistant: "Sohbetler"
+        default: LocalizedStringKey(rawValue)
+        }
+    }
     var symbol: String {
         switch self {
         case .addParticipant: "person.badge.plus"
@@ -125,6 +134,9 @@ enum WorkspaceSection: String, CaseIterable, Identifiable {
         case .coded: "line.3.horizontal.decrease.circle"
         case .overview: "person.3"
         case .map: "point.3.connected.trianglepath.dotted"
+        case .assistant: "bubble.left.and.bubble.right"
+        case .analysisContext: "doc.text"
+        case .savedAnalyses: "tray.full"
         case .profile: "chart.bar.xaxis"
         case .frequency: "chart.bar"
         case .milesMatrix: "square.grid.3x3"

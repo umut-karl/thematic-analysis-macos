@@ -4,22 +4,30 @@ import SwiftUI
 struct DebugLabView: View {
     @ObservedObject var store: AnalysisStore
     let module: DebugLabModule
+    let isExperimental: Bool
     @State private var strongThreshold = 2
     @State private var frameworkWorkspace: DebugFrameworkMatrixWorkspace
 
-    init(store: AnalysisStore, module: DebugLabModule) {
+    init(store: AnalysisStore, module: DebugLabModule, isExperimental: Bool) {
         self.store = store
         self.module = module
-        let research = ProjectResearchDatasetBuilder.build(store.project)
+        self.isExperimental = isExperimental
+        let research = isExperimental
+            ? DebugResearchDemoData.demo
+            : ProjectResearchDatasetBuilder.build(store.project)
         _frameworkWorkspace = State(initialValue: DebugFrameworkMatrixWorkspace(dataset: research))
     }
 
     private var research: DebugResearchDataset {
-        ProjectResearchDatasetBuilder.build(store.project)
+        isExperimental
+            ? DebugResearchDemoData.demo
+            : ProjectResearchDatasetBuilder.build(store.project)
     }
 
     private var dataset: DebugAnalysisDataset {
-        DebugAnalyticsEngine.project(store.project, focusThemeID: nil, themeLimit: 12)
+        isExperimental
+            ? DebugAnalyticsEngine.demo
+            : DebugAnalyticsEngine.project(store.project, focusThemeID: nil, themeLimit: 12)
     }
 
     var body: some View {
@@ -30,10 +38,16 @@ struct DebugLabView: View {
                 ScrollView {
                     Group {
                         switch module {
+                        case .overview: DebugLabOverviewView(research: research)
                         case .profile: DominanceProfileView(dataset: dataset, strongThreshold: $strongThreshold)
                         case .frequency: FrequencyDistributionView(dataset: dataset)
                         case .milesMatrix: ConceptualMatrixView(dataset: dataset, strongThreshold: $strongThreshold)
                         case .prevalence: PrevalenceAnalysisView(dataset: dataset)
+                        case .codebook: DebugCodebookView(dataset: research)
+                        case .themeWorkbench: DebugThemeWorkbenchView(dataset: research)
+                        case .queries: DebugComparisonQueryView(dataset: research)
+                        case .journal: DebugReflexiveJournalView(dataset: research)
+                        case .evidenceReport: DebugEvidenceReportView(dataset: research)
                         case .frameworkMatrix: EmptyView()
                         }
                     }
@@ -71,35 +85,35 @@ private struct DominanceProfileView: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(spacing: 12) {
                 Spacer()
-                Picker("Sort", selection: $sort) {
+                Picker("Sırala", selection: $sort) {
                     ForEach(DominanceSort.allCases) { item in Text(LocalizedStringKey(item.rawValue)).tag(item) }
                 }
                 .frame(width: 170)
                 Stepper(value: $strongThreshold, in: 2...5) {
-                    Text("Strong: ") + Text("\(strongThreshold)+")
+                    Text("Güçlü: ") + Text("\(strongThreshold)+")
                 }
                 .frame(width: 110)
             }
 
             HStack(spacing: 10) {
                 DominanceSpotlight(
-                    title: "Highest Volume",
+                    title: "En yüksek hacim",
                     theme: metrics.max(by: { $0.occurrenceCount < $1.occurrenceCount })?.theme.name ?? "—",
                     value: metrics.max(by: { $0.occurrenceCount < $1.occurrenceCount }).map {
-                        "\($0.occurrenceCount) occurrences"
+                        AppLocalization.string("\($0.occurrenceCount) görünüm")
                     } ?? "—",
                     symbol: "chart.bar.fill"
                 )
                 DominanceSpotlight(
-                    title: "Broadest Reach",
+                    title: "En geniş erişim",
                     theme: metrics.max(by: { $0.prevalence < $1.prevalence })?.theme.name ?? "—",
                     value: metrics.max(by: { $0.prevalence < $1.prevalence }).map { $0.prevalence.formatted(.percent.precision(.fractionLength(0))) } ?? "—",
                     symbol: "person.3.fill"
                 )
                 DominanceSpotlight(
-                    title: "Strongest Matrix",
+                    title: "En güçlü matris",
                     theme: metrics.max(by: { matrixTotal($0) < matrixTotal($1) })?.theme.name ?? "—",
-                    value: metrics.max(by: { matrixTotal($0) < matrixTotal($1) }).map { "\(matrixTotal($0))/\(maximumMatrixTotal) points" } ?? "—",
+                    value: metrics.max(by: { matrixTotal($0) < matrixTotal($1) }).map { "\(matrixTotal($0))/\(maximumMatrixTotal) puan" } ?? "—",
                     symbol: "square.grid.3x3.fill"
                 )
             }
@@ -130,9 +144,9 @@ private struct DominanceProfileView: View {
                     Circle().fill(ThemePalette.color(selectedMetric.theme.colorIndex)).frame(width: 9, height: 9)
                     Text(selectedMetric.theme.name).fontWeight(.semibold)
                     Divider().frame(height: 22)
-                    Label("\(selectedMetric.occurrenceCount) occurrences", systemImage: "number")
-                    Label("\(selectedMetric.participantCount)/\(selectedMetric.participantTotal) participants", systemImage: "person.2")
-                    Label("\(matrixTotal(selectedMetric))/\(maximumMatrixTotal) matrix score", systemImage: "square.grid.3x3")
+                    Label(AppLocalization.string("\(selectedMetric.occurrenceCount) görünüm"), systemImage: "number")
+                    Label(AppLocalization.string("\(selectedMetric.participantCount)/\(selectedMetric.participantTotal) katılımcı"), systemImage: "person.2")
+                    Label(AppLocalization.string("\(matrixTotal(selectedMetric))/\(maximumMatrixTotal) matris puanı"), systemImage: "square.grid.3x3")
                     Spacer()
                 }
                 .font(.callout).padding(12)
@@ -149,9 +163,9 @@ private struct DominanceProfileView: View {
 }
 
 private enum DominanceSort: String, CaseIterable, Identifiable {
-    case frequency = "Frequency"
-    case prevalence = "Prevalence"
-    case matrix = "Matrix Strength"
+    case frequency = "Frekans"
+    case prevalence = "Yaygınlık"
+    case matrix = "Matris gücü"
     var id: String { rawValue }
 }
 
@@ -178,10 +192,10 @@ private struct DominanceSpotlight: View {
 private struct ProfileHeaderRow: View {
     var body: some View {
         HStack(spacing: 10) {
-            Text("Theme").frame(width: 150, alignment: .leading)
-            Text("Frequency · Weight").frame(width: 145, alignment: .leading)
-            Text("Prevalence").frame(width: 120, alignment: .leading)
-            Text("Participant Matrix · 0–2").frame(minWidth: 190, maxWidth: .infinity, alignment: .leading)
+            Text("Tema").frame(width: 150, alignment: .leading)
+            Text("Frekans · ağırlık").frame(width: 145, alignment: .leading)
+            Text("Yaygınlık").frame(width: 120, alignment: .leading)
+            Text("Katılımcı matrisi · 0–2").frame(minWidth: 190, maxWidth: .infinity, alignment: .leading)
         }
         .font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
         .padding(.horizontal, 12).padding(.vertical, 9).background(.bar)
@@ -261,8 +275,8 @@ private struct FrequencyDistributionView: View {
         VStack(alignment: .leading, spacing: 18) {
             Chart(metrics) { metric in
                 BarMark(
-                    x: .value("Coding", metric.occurrenceCount),
-                    y: .value("Theme", metric.theme.name)
+                    x: .value("Kodlama", metric.occurrenceCount),
+                    y: .value("Tema", metric.theme.name)
                 )
                 .foregroundStyle(ThemePalette.color(metric.theme.colorIndex).gradient)
                 .annotation(position: .trailing) {
@@ -270,7 +284,7 @@ private struct FrequencyDistributionView: View {
                         .font(.caption).monospacedDigit()
                 }
             }
-            .chartXAxisLabel("Coding occurrences")
+            .chartXAxisLabel("Kodlama görünümü")
             .frame(height: max(250, CGFloat(metrics.count) * 52))
 
             DebugResultTable(metrics: metrics, mode: .frequency)
@@ -290,14 +304,14 @@ private struct PrevalenceAnalysisView: View {
         VStack(alignment: .leading, spacing: 18) {
             Chart(metrics) { metric in
                 BarMark(
-                    x: .value("Prevalence", metric.prevalence * 100),
-                    y: .value("Theme", metric.theme.name)
+                    x: .value("Yaygınlık", metric.prevalence * 100),
+                    y: .value("Tema", metric.theme.name)
                 )
                 .foregroundStyle(ThemePalette.color(metric.theme.colorIndex).opacity(0.22))
                 .clipShape(Capsule())
                 PointMark(
-                    x: .value("Prevalence", metric.prevalence * 100),
-                    y: .value("Theme", metric.theme.name)
+                    x: .value("Yaygınlık", metric.prevalence * 100),
+                    y: .value("Tema", metric.theme.name)
                 )
                 .symbolSize(90)
                 .foregroundStyle(ThemePalette.color(metric.theme.colorIndex))
@@ -307,7 +321,7 @@ private struct PrevalenceAnalysisView: View {
                 }
             }
             .chartXScale(domain: 0...100)
-            .chartXAxisLabel("Participant prevalence (%)")
+            .chartXAxisLabel("Katılımcı yaygınlığı (%)")
             .frame(height: max(250, CGFloat(metrics.count) * 52))
 
             DebugResultTable(metrics: metrics, mode: .prevalence)
@@ -326,7 +340,7 @@ private struct ConceptualMatrixView: View {
             HStack {
                 Spacer()
                 Stepper(value: $strongThreshold, in: 2...5) {
-                    Text("Strong threshold: ") + Text("\(strongThreshold)+") + Text(" occurrence(s)")
+                    Text("Güçlü eşik: ") + Text("\(strongThreshold)+") + Text(" görünüm")
                 }
                 .frame(width: 190)
             }
@@ -334,7 +348,7 @@ private struct ConceptualMatrixView: View {
             ScrollView(.horizontal) {
                 VStack(spacing: 0) {
                     HStack(spacing: 0) {
-                        Text("Participant").fontWeight(.semibold).frame(width: participantWidth, alignment: .leading)
+                        Text("Katılımcı").fontWeight(.semibold).frame(width: participantWidth, alignment: .leading)
                         ForEach(dataset.themes) { theme in
                             Text(theme.name).font(.caption).fontWeight(.semibold).lineLimit(3)
                                 .frame(width: themeWidth).frame(minHeight: 48)
@@ -360,7 +374,7 @@ private struct ConceptualMatrixView: View {
                     }
 
                     HStack(spacing: 0) {
-                        Text("Total Score").fontWeight(.semibold).frame(width: participantWidth, alignment: .leading)
+                        Text("Toplam puan").fontWeight(.semibold).frame(width: participantWidth, alignment: .leading)
                         ForEach(dataset.themes) { theme in
                             let total = dataset.participants.reduce(0) {
                                 $0 + dataset.matrixScore(participantID: $1.id, themeID: theme.id, strongThreshold: strongThreshold)
@@ -385,15 +399,15 @@ private struct MatrixCell: View {
     var body: some View {
         HStack(spacing: 6) {
             Text(score.formatted()).font(.headline).monospacedDigit()
-            Text(LocalizedStringKey(score == 0 ? "None" : score == 1 ? "Secondary" : "Strong"))
+            Text(LocalizedStringKey(score == 0 ? "Yok" : score == 1 ? "İkincil" : "Güçlü"))
                 .font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(score == 0 ? Color.secondary.opacity(0.05) : color.opacity(score == 1 ? 0.16 : 0.42))
         .overlay(Rectangle().stroke(.separator.opacity(0.45)))
-        .help("\(count) coding occurrences")
+        .help(AppLocalization.string("\(count) kodlama görünümü"))
         .accessibilityLabel(
-            "\(score == 0 ? "None" : score == 1 ? "Secondary" : "Strong"), \(count) coding occurrences"
+            "\(AppLocalization.string(score == 0 ? "Yok" : score == 1 ? "İkincil" : "Güçlü")), \(AppLocalization.string("\(count) kodlama görünümü"))"
         )
     }
 }
@@ -407,7 +421,7 @@ private struct DebugResultTable: View {
     var body: some View {
         Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 9) {
             GridRow {
-                Text("Row"); Text("Theme"); Text("Coding"); Text("Participant"); Text(LocalizedStringKey(mode == .frequency ? "Weight" : "Prevalence"))
+                Text("Sıra"); Text("Tema"); Text("Kodlama"); Text("Katılımcı"); Text(LocalizedStringKey(mode == .frequency ? "Ağırlık" : "Yaygınlık"))
             }
             .font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
             Divider().gridCellColumns(5)

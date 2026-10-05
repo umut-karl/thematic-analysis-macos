@@ -3,14 +3,14 @@ import XCTest
 
 final class DebugAnalyticsEngineTests: XCTestCase {
     func testProjectAnalyticsRollsDescendantAssignmentsIntoComparedTheme() throws {
-        let root = ThemeNode(name: "Tool", parentID: nil, colorIndex: 0)
-        let child = ThemeNode(name: "Assistant", parentID: root.id, colorIndex: 0)
-        let other = ThemeNode(name: "Threat", parentID: nil, colorIndex: 1)
-        let firstSegment = TranscriptSegment(order: 1, part: nil, speaker: "A", start: "", end: "", text: "First")
-        let secondSegment = TranscriptSegment(order: 1, part: nil, speaker: "B", start: "", end: "", text: "Second")
+        let root = ThemeNode(name: "Araç", parentID: nil, colorIndex: 0)
+        let child = ThemeNode(name: "Yardımcı", parentID: root.id, colorIndex: 0)
+        let other = ThemeNode(name: "Tehdit", parentID: nil, colorIndex: 1)
+        let firstSegment = TranscriptSegment(order: 1, part: nil, speaker: "A", start: "", end: "", text: "Birinci")
+        let secondSegment = TranscriptSegment(order: 1, part: nil, speaker: "B", start: "", end: "", text: "İkinci")
         let first = Interview(
-            name: "Participant A Transcript",
-            participant: "Participant A",
+            name: "Ayşe Transkripti",
+            participant: "Ayşe",
             participantDetails: nil,
             segments: [firstSegment],
             codingUnits: [
@@ -19,8 +19,8 @@ final class DebugAnalyticsEngineTests: XCTestCase {
             ]
         )
         let second = Interview(
-            name: "Participant B Transcript",
-            participant: "Participant B",
+            name: "Fatma Transkripti",
+            participant: "Fatma",
             participantDetails: nil,
             segments: [secondSegment],
             codingUnits: [CodingUnit(segmentIDs: [secondSegment.id], themeIDs: [other.id], memo: "")]
@@ -28,8 +28,8 @@ final class DebugAnalyticsEngineTests: XCTestCase {
         let project = AnalysisProject(name: "Test", interviews: [first, second], themes: [root, child, other])
 
         let dataset = DebugAnalyticsEngine.project(project, focusThemeID: nil, themeLimit: 5)
-        let rootMetric = try XCTUnwrap(dataset.metrics.first(where: { $0.theme.name == "Tool" }))
-        let otherMetric = try XCTUnwrap(dataset.metrics.first(where: { $0.theme.name == "Threat" }))
+        let rootMetric = try XCTUnwrap(dataset.metrics.first(where: { $0.theme.name == "Araç" }))
+        let otherMetric = try XCTUnwrap(dataset.metrics.first(where: { $0.theme.name == "Tehdit" }))
 
         XCTAssertEqual(rootMetric.occurrenceCount, 2)
         XCTAssertEqual(rootMetric.participantCount, 1)
@@ -41,12 +41,12 @@ final class DebugAnalyticsEngineTests: XCTestCase {
     }
 
     func testFocusedAnalyticsComparesImmediateChildren() throws {
-        let root = ThemeNode(name: "Ontology", parentID: nil, colorIndex: 0)
-        let child = ThemeNode(name: "Tool", parentID: root.id, colorIndex: 0)
-        let segment = TranscriptSegment(order: 1, part: nil, speaker: "A", start: "", end: "", text: "Text")
+        let root = ThemeNode(name: "Ontoloji", parentID: nil, colorIndex: 0)
+        let child = ThemeNode(name: "Araç", parentID: root.id, colorIndex: 0)
+        let segment = TranscriptSegment(order: 1, part: nil, speaker: "A", start: "", end: "", text: "Metin")
         let interview = Interview(
-            name: "Interview",
-            participant: "Participant A",
+            name: "Görüşme",
+            participant: "Ayşe",
             participantDetails: nil,
             segments: [segment],
             codingUnits: [CodingUnit(segmentIDs: [segment.id], themeIDs: [child.id], memo: "")]
@@ -55,7 +55,7 @@ final class DebugAnalyticsEngineTests: XCTestCase {
 
         let dataset = DebugAnalyticsEngine.project(project, focusThemeID: root.id, themeLimit: 5)
 
-        XCTAssertEqual(dataset.themes.map(\.name), ["Tool"])
+        XCTAssertEqual(dataset.themes.map(\.name), ["Araç"])
         XCTAssertEqual(dataset.totalOccurrences, 1)
     }
 }

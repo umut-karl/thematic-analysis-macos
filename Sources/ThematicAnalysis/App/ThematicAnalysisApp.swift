@@ -12,7 +12,7 @@ struct ThematicAnalysisApp: App {
     }
 
     var body: some Scene {
-        WindowGroup("Thematic Analysis", id: "main") {
+        WindowGroup("Tematik Analiz", id: "main") {
             AppRootView(library: library)
                 .frame(minWidth: 980, minHeight: 640)
                 .environment(\.locale, locale)
@@ -21,22 +21,22 @@ struct ThematicAnalysisApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button { library.isCreatingProject = true } label: {
-                    Text(verbatim: AppLocalization.string("New Project…"))
+                    Text(verbatim: AppLocalization.string("Yeni Proje…"))
                 }
                     .keyboardShortcut("n", modifiers: .command)
                 Button { library.closeProject() } label: {
-                    Text(verbatim: AppLocalization.string("Project Library"))
+                    Text(verbatim: AppLocalization.string("Proje Kütüphanesi"))
                 }
                     .keyboardShortcut("o", modifiers: [.command, .shift])
             }
             CommandGroup(after: .saveItem) {
                 Button { library.activeProjectStore?.persist() } label: {
-                    Text(verbatim: AppLocalization.string("Save Now"))
+                    Text(verbatim: AppLocalization.string("Şimdi Kaydet"))
                 }
                     .keyboardShortcut("s", modifiers: .command)
                     .disabled(library.activeProjectStore == nil)
                 Button { library.activeProjectStore?.createBackup() } label: {
-                    Text(verbatim: AppLocalization.string("Create Backup"))
+                    Text(verbatim: AppLocalization.string("Yedek Oluştur"))
                 }
                     .keyboardShortcut("b", modifiers: [.command, .shift])
                     .disabled(library.activeProjectStore == nil)

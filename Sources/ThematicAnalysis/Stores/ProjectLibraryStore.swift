@@ -5,7 +5,7 @@ final class ProjectLibraryStore: ObservableObject {
     @Published private(set) var projects: [ProjectLibraryItem] = []
     @Published private(set) var activeProjectStore: AnalysisStore?
     @Published private(set) var activeProjectID: UUID?
-    @Published var lastMessage = "Select a project or create a new one."
+    @Published var lastMessage = "Bir proje seçin veya yeni bir proje oluşturun."
     @Published var isCreatingProject = false
 
     private let fileManager = FileManager.default
@@ -37,7 +37,7 @@ final class ProjectLibraryStore: ObservableObject {
     func createProject(named name: String) -> Bool {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            lastMessage = "Project name cannot be empty."
+            lastMessage = "Proje adı boş bırakılamaz."
             return false
         }
 
@@ -50,8 +50,20 @@ final class ProjectLibraryStore: ObservableObject {
         persistIndex()
         activeProjectID = item.id
         activeProjectStore = store
-        lastMessage = "\(cleanName) created."
+        lastMessage = "\(cleanName) oluşturuldu."
         return true
+    }
+
+    func openProject(_ item: ProjectLibraryItem) {
+        closeProject()
+        let root = projectRoot(for: item)
+        guard fileManager.fileExists(atPath: root.appendingPathComponent("active-project.json").path) else {
+            lastMessage = "Proje dosyası bulunamadı."
+            return
+        }
+        activeProjectID = item.id
+        activeProjectStore = AnalysisStore(storageRoot: root)
+        lastMessage = "\(item.name) açıldı."
     }
 
     private func installDemoProjectIfNeeded() {
@@ -75,25 +87,13 @@ final class ProjectLibraryStore: ObservableObject {
         let root = projectRoot(for: item)
         do {
             try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
-            try JSONEncoder.thematic.encode(project)
+            try JSONEncoder.tematik.encode(project)
                 .write(to: root.appendingPathComponent("active-project.json"), options: .atomic)
             projects.append(item)
             persistIndex()
         } catch {
-            lastMessage = "Could not install the demo project: \(error.localizedDescription)"
+            lastMessage = "Demo proje yüklenemedi: \(error.localizedDescription)"
         }
-    }
-
-    func openProject(_ item: ProjectLibraryItem) {
-        closeProject()
-        let root = projectRoot(for: item)
-        guard fileManager.fileExists(atPath: root.appendingPathComponent("active-project.json").path) else {
-            lastMessage = "Project file could not be found."
-            return
-        }
-        activeProjectID = item.id
-        activeProjectStore = AnalysisStore(storageRoot: root)
-        lastMessage = "\(item.name) opened."
     }
 
     func closeProject() {
@@ -108,7 +108,7 @@ final class ProjectLibraryStore: ObservableObject {
         }
         activeProjectStore = nil
         activeProjectID = nil
-        lastMessage = "Project library"
+        lastMessage = "Proje kütüphanesi"
     }
 
     func importProject(from url: URL) async {
@@ -128,15 +128,15 @@ final class ProjectLibraryStore: ObservableObject {
             persistIndex()
             activeProjectID = item.id
             activeProjectStore = store
-            lastMessage = "\(project.name) was added to the library."
+            lastMessage = "\(project.name) kütüphaneye eklendi."
         } catch {
-            lastMessage = "Could not open project: \(error.localizedDescription)"
+            lastMessage = "Proje açılamadı: \(error.localizedDescription)"
         }
     }
 
     private func loadIndex() {
         guard let data = try? Data(contentsOf: indexURL),
-              let index = try? JSONDecoder.thematic.decode(ProjectLibraryIndex.self, from: data) else {
+              let index = try? JSONDecoder.tematik.decode(ProjectLibraryIndex.self, from: data) else {
             projects = []
             return
         }
@@ -150,7 +150,7 @@ final class ProjectLibraryStore: ObservableObject {
         guard !fileManager.fileExists(atPath: legacyMigrationMarkerURL.path),
               fileManager.fileExists(atPath: legacyURL.path),
               let data = try? Data(contentsOf: legacyURL),
-              let project = try? JSONDecoder.thematic.decode(AnalysisProject.self, from: data) else { return }
+              let project = try? JSONDecoder.tematik.decode(AnalysisProject.self, from: data) else { return }
 
         let item = ProjectLibraryItem(
             name: project.name,
@@ -165,9 +165,9 @@ final class ProjectLibraryStore: ObservableObject {
             projects.append(item)
             persistIndex()
             try Data().write(to: legacyMigrationMarkerURL, options: .atomic)
-            lastMessage = "The existing workspace was added to the project library."
+            lastMessage = "Mevcut çalışma proje kütüphanesine eklendi."
         } catch {
-            lastMessage = "The existing workspace could not be migrated: \(error.localizedDescription)"
+            lastMessage = "Mevcut çalışma taşınamadı: \(error.localizedDescription)"
         }
     }
 
@@ -176,7 +176,7 @@ final class ProjectLibraryStore: ObservableObject {
         for index in projects.indices {
             let url = projectRoot(for: projects[index]).appendingPathComponent("active-project.json")
             guard let data = try? Data(contentsOf: url),
-                  let project = try? JSONDecoder.thematic.decode(AnalysisProject.self, from: data) else { continue }
+                  let project = try? JSONDecoder.tematik.decode(AnalysisProject.self, from: data) else { continue }
             let participantCount = project.interviews.count
             let codingUnitCount = project.interviews.reduce(0) { $0 + $1.codingUnits.count }
             if projects[index].name != project.name
@@ -195,10 +195,10 @@ final class ProjectLibraryStore: ObservableObject {
 
     private func persistIndex() {
         do {
-            try JSONEncoder.thematic.encode(ProjectLibraryIndex(projects: projects))
+            try JSONEncoder.tematik.encode(ProjectLibraryIndex(projects: projects))
                 .write(to: indexURL, options: .atomic)
         } catch {
-            lastMessage = "Could not save the project list: \(error.localizedDescription)"
+            lastMessage = "Proje listesi kaydedilemedi: \(error.localizedDescription)"
         }
     }
 

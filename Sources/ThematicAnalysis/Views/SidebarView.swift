@@ -6,7 +6,7 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: $selection) {
-            Section("Interviews and Coding") {
+            Section("Görüşme ve Kodlama") {
                 Label {
                     Text(WorkspaceSection.addParticipant.localizedTitle)
                 } icon: {
@@ -18,12 +18,17 @@ struct SidebarView: View {
                     Label { Text(section.localizedTitle) } icon: { Image(systemName: section.symbol) }.tag(section)
                 }
             }
-            Section("Project Analysis") {
+            Section("Proje Analizi") {
                 ForEach([WorkspaceSection.overview, .map]) { section in
                     Label { Text(section.localizedTitle) } icon: { Image(systemName: section.symbol) }.tag(section)
                 }
             }
-            Section("Analytical Views") {
+            Section("Analiz Asistanı") {
+                ForEach([WorkspaceSection.assistant, .analysisContext, .savedAnalyses]) { section in
+                    Label { Text(section.localizedTitle) } icon: { Image(systemName: section.symbol) }.tag(section)
+                }
+            }
+            Section("Analitik Görünümler") {
                 ForEach(WorkspaceSection.indicatorSections) { section in
                     Label { Text(section.localizedTitle) } icon: { Image(systemName: section.symbol) }
                         .tag(section)
@@ -32,26 +37,42 @@ struct SidebarView: View {
         }
         .listStyle(.sidebar)
         .safeAreaInset(edge: .bottom) {
-            HStack(spacing: 8) {
+            VStack(spacing: 2) {
                 Button(action: onShowProjects) {
-                    Label("Projects", systemImage: "rectangle.stack")
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    SidebarFooterLabel(title: "Proje Kütüphanesi", systemImage: "square.grid.2x2")
                 }
-                .buttonStyle(.bordered)
-                .help("Open another project")
+                .buttonStyle(.plain)
+                .help("Başka bir projeyi aç")
 
                 SettingsLink {
-                    Label("Settings", systemImage: "gearshape")
-                        .labelStyle(.iconOnly)
+                    SidebarFooterLabel(title: "Ayarlar", systemImage: "gearshape")
                 }
-                .buttonStyle(.bordered)
-                .help("Open API key and app settings")
+                .buttonStyle(.plain)
+                .help("API anahtarı ve uygulama ayarlarını aç")
             }
-            .controlSize(.small)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(10)
-            .background(.bar)
+            .padding(8)
+            .overlay(alignment: .top) { Divider() }
+            .background(.thinMaterial)
         }
     }
 
+}
+
+private struct SidebarFooterLabel: View {
+    let title: LocalizedStringKey
+    let systemImage: String
+    @State private var isHovered = false
+
+    var body: some View {
+        Label(title, systemImage: systemImage)
+            .frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
+            .padding(.horizontal, 8)
+            .contentShape(Rectangle())
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(isHovered ? Color.secondary.opacity(0.12) : Color.clear)
+            )
+            .onHover { isHovered = $0 }
+    }
 }

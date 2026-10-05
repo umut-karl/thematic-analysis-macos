@@ -10,23 +10,23 @@ final class TranscriptExcelExportTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: root) }
 
         let interview = Interview(
-            name: "Participant A Diarized Interview",
-            participant: "Participant A",
+            name: "Ayşe Diarize Görüşmesi",
+            participant: "Ayşe",
             segments: [
-                TranscriptSegment(order: 1, part: nil, speaker: "Interviewer", start: "00:00", end: "00:05", text: "Welcome."),
-                TranscriptSegment(order: 2, part: 1, speaker: "Participant A", start: "00:05", end: "01:06", text: "Thank you & glad to be here.")
+                TranscriptSegment(order: 1, part: nil, speaker: "Görüşmeci", start: "00:00", end: "00:05", text: "Hoş geldiniz."),
+                TranscriptSegment(order: 2, part: 1, speaker: "Ayşe", start: "00:05", end: "01:06", text: "Teşekkür ederim & hoş bulduk.")
             ]
         )
-        let output = root.appendingPathComponent("Participant-A-Transcript.xlsx")
+        let output = root.appendingPathComponent("Ayse-Transkript.xlsx")
 
         try ExportService.writeTranscriptXLSX(interview, to: output)
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: output.path))
         let imported = try TranscriptImporter.importFile(at: output)
-        XCTAssertEqual(imported.map(\.speaker), ["Interviewer", "Participant A"])
+        XCTAssertEqual(imported.map(\.speaker), ["Görüşmeci", "Ayşe"])
         XCTAssertEqual(imported.map(\.start), ["00:00", "00:05"])
         XCTAssertEqual(imported.map(\.end), ["00:05", "01:06"])
-        XCTAssertEqual(imported.map(\.text), ["Welcome.", "Thank you & glad to be here."])
+        XCTAssertEqual(imported.map(\.text), ["Hoş geldiniz.", "Teşekkür ederim & hoş bulduk."])
         XCTAssertEqual(imported.map(\.part), [nil, 1])
 
         let extracted = root.appendingPathComponent("extracted", isDirectory: true)
@@ -47,9 +47,9 @@ final class TranscriptExcelExportTests: XCTestCase {
     }
 
     func testSpeakerPaletteAssignsStableDistinctColorsByFirstAppearance() {
-        let indices = SpeakerPalette.indices(for: ["Interviewer", "Participant A", "Interviewer", "Third person"])
-        XCTAssertEqual(SpeakerPalette.index(for: "Interviewer", in: indices), 0)
-        XCTAssertEqual(SpeakerPalette.index(for: "Participant A", in: indices), 1)
-        XCTAssertEqual(SpeakerPalette.index(for: "Third person", in: indices), 2)
+        let indices = SpeakerPalette.indices(for: ["Görüşmeci", "Ayşe", "Görüşmeci", "Üçüncü kişi"])
+        XCTAssertEqual(SpeakerPalette.index(for: "Görüşmeci", in: indices), 0)
+        XCTAssertEqual(SpeakerPalette.index(for: "Ayşe", in: indices), 1)
+        XCTAssertEqual(SpeakerPalette.index(for: "Üçüncü kişi", in: indices), 2)
     }
 }

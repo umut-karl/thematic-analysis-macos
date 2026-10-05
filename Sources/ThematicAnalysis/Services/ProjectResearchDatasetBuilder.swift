@@ -20,7 +20,7 @@ enum ProjectResearchDatasetBuilder {
                 id: interview.id.uuidString,
                 name: interview.participant,
                 role: interview.participantDetails?.occupation ?? "",
-                usageGroup: interview.participantDetails?.gender.nilIfBlank ?? "All participants"
+                usageGroup: interview.participantDetails?.gender.nilIfBlank ?? "Tüm katılımcılar"
             )
         }
 

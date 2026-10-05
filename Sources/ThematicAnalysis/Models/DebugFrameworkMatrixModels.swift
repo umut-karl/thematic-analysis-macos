@@ -16,9 +16,9 @@ struct FrameworkMatrixColumn: Identifiable, Hashable {
 
     var kindLabel: String {
         switch source {
-        case .candidateTheme: "Theme"
+        case .candidateTheme: "Tema"
         case .code: "Kod"
-        case .custom: "Custom"
+        case .custom: "Özel"
         }
     }
 
