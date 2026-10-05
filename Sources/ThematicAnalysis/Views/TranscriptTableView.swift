@@ -49,7 +49,7 @@ struct TranscriptTableView: View {
                             Button(role: .destructive) { showDeleteConfirmation = true } label: { Label("Sil", systemImage: "trash") }
                                 .disabled(store.selectedSegmentIDs.isEmpty)
                         }
-                        Button(isEditingTable ? "Bitti" : "Tabloyu Düzenle") {
+                        Button(AppLocalization.string(isEditingTable ? "Bitti" : "Tabloyu Düzenle")) {
                             isEditingTable.toggle()
                             if !isEditingTable { store.persist() }
                         }
@@ -207,14 +207,14 @@ private struct TranscriptGridRow: View {
                     if let speakerColorIndex {
                         Circle().fill(SpeakerPalette.color(speakerColorIndex)).frame(width: 8, height: 8)
                     }
-                    Text(row.speaker.isEmpty ? "—" : row.speaker)
+                    Text(verbatim: row.speaker.isEmpty ? "—" : row.speaker)
                         .font(.callout).fontWeight(.medium).lineLimit(3)
                 }
                 .frame(width: speakerColumnWidth, alignment: .leading).padding(.top, 2)
-                Text(row.start.isEmpty ? "—" : "\(row.start)–\(row.end)")
+                Text(verbatim: row.start.isEmpty ? "—" : "\(row.start)–\(row.end)")
                     .font(.callout).monospacedDigit().frame(width: timeColumnWidth, alignment: .leading).padding(.top, 2)
                 HStack(alignment: .top, spacing: 8) {
-                    Text(row.text.isEmpty ? "Boş satır" : row.text)
+                    Text(verbatim: row.text.isEmpty ? AppLocalization.string("Boş satır") : row.text)
                         .font(.callout)
                         .foregroundStyle(row.text.isEmpty ? .secondary : .primary)
                         .lineLimit(nil)

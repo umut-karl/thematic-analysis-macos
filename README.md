@@ -28,6 +28,19 @@ The interface can be switched between English and Turkish from Settings.
   analytic decision automatically.
 - Create and restore complete project backups.
 
+## Latest update — October 5, 2026
+
+- The native app now launches in English by default, including a one-time
+  migration for earlier installations that inherited the Turkish default.
+- Dynamic labels and status text now use the selected app language reliably;
+  this also fixes previously untranslated states such as **No file selected**.
+- The Project Library has a redesigned empty state with clear actions for
+  creating a study or opening a backup, plus a local-storage privacy cue.
+- Legacy default project names are migrated from **Yeni Tematik Analiz** to
+  **Untitled Project** without changing researcher-authored project names.
+- Additional analysis, context, codebook, journal, and reporting labels were
+  audited for consistent English and Turkish presentation.
+
 ## Built-in demo
 
 The project library includes an editable **Demo — AI-Assisted Work** project

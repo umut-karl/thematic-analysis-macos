@@ -19,11 +19,23 @@ final class LocalizationTests: XCTestCase {
     func testEnglishLocalizesDynamicStatusMessages() {
         withLanguage(.english) {
             XCTAssertEqual(AppLocalization.string("12 satır içe aktarıldı"), "12 row(s) imported")
+            XCTAssertEqual(AppLocalization.string("1 proje"), "1 project(s)")
             XCTAssertEqual(
                 AppLocalization.string("Excel çıktısı kaydedildi: interview.xlsx"),
                 "Excel export saved: interview.xlsx"
             )
         }
+    }
+
+    func testFirstRunMigrationSelectsEnglish() throws {
+        let suiteName = "TematikAnaliz-Localization-Tests-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        defaults.set(AppLanguage.turkish.rawValue, forKey: AppLocalization.languageKey)
+        AppLocalization.applyEnglishDefaultMigrationIfNeeded(defaults: defaults)
+
+        XCTAssertEqual(defaults.string(forKey: AppLocalization.languageKey), AppLanguage.english.rawValue)
     }
 
     func testEnglishLocalizesAssistantSettingsAndSuggestions() {

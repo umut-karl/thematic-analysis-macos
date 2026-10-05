@@ -60,12 +60,16 @@ struct SidebarView: View {
 }
 
 private struct SidebarFooterLabel: View {
-    let title: LocalizedStringKey
+    let title: String
     let systemImage: String
     @State private var isHovered = false
 
     var body: some View {
-        Label(title, systemImage: systemImage)
+        Label {
+            Text(verbatim: AppLocalization.string(title))
+        } icon: {
+            Image(systemName: systemImage)
+        }
             .frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
             .padding(.horizontal, 8)
             .contentShape(Rectangle())

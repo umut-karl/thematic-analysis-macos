@@ -422,7 +422,7 @@ private struct ThemeMapNode: View {
                         ? (AppLocalization.language == .english ? "Expand \(childCount) subthemes" : "\(childCount) alt temayı aç")
                         : AppLocalization.string("Alt temaları daralt")
                 )
-                .accessibilityLabel(collapsed ? "Alt temaları aç" : "Alt temaları daralt")
+                .accessibilityLabel(AppLocalization.string(collapsed ? "Alt temaları aç" : "Alt temaları daralt"))
                 .accessibilityValue(collapsed ? "Kapalı" : "Açık")
             }
         }

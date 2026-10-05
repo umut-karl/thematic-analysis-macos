@@ -197,13 +197,13 @@ struct ParticipantCreationView: View {
             Image(systemName: transcriptURL == nil ? "doc.badge.plus" : "checkmark.circle.fill")
                 .font(.title2).foregroundStyle(transcriptURL == nil ? Color.secondary : Color.green)
             VStack(alignment: .leading, spacing: 3) {
-                Text(transcriptURL?.lastPathComponent ?? "Henüz dosya seçilmedi")
+                Text(verbatim: transcriptURL?.lastPathComponent ?? AppLocalization.string("Henüz dosya seçilmedi"))
                     .fontWeight(.medium).lineLimit(1)
                 Text("XLSX, CSV veya TSV")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Button(transcriptURL == nil ? "Transkript Seç…" : "Dosyayı Değiştir…") {
+            Button(AppLocalization.string(transcriptURL == nil ? "Transkript Seç…" : "Dosyayı Değiştir…")) {
                 showTranscriptImporter = true
             }
         }
@@ -217,12 +217,12 @@ struct ParticipantCreationView: View {
                 Image(systemName: audioURL == nil ? "waveform.badge.plus" : "checkmark.circle.fill")
                     .font(.title2).foregroundStyle(audioURL == nil ? Color.secondary : Color.green)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(audioURL?.lastPathComponent ?? "Henüz ses dosyası seçilmedi")
+                    Text(verbatim: audioURL?.lastPathComponent ?? AppLocalization.string("Henüz ses dosyası seçilmedi"))
                         .fontWeight(.medium).lineLimit(1)
                     Text(audioMetadata).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button(audioURL == nil ? "Ses Kaydı Seç…" : "Dosyayı Değiştir…") {
+                Button(AppLocalization.string(audioURL == nil ? "Ses Kaydı Seç…" : "Dosyayı Değiştir…")) {
                     showAudioImporter = true
                 }
             }
@@ -371,7 +371,11 @@ struct ParticipantCreationView: View {
     private func suggestedSpeakerNames(for speakers: [String]) -> [String: String] {
         let participant = name.trimmingCharacters(in: .whitespacesAndNewlines)
         return Dictionary(uniqueKeysWithValues: speakers.enumerated().map { index, speaker in
-            let suggestion = index == 0 ? "Görüşmeci" : index == 1 ? participant : "Konuşmacı \(index + 1)"
+            let suggestion = index == 0
+                ? AppLocalization.string("Görüşmeci")
+                : index == 1
+                    ? participant
+                    : (AppLocalization.language == .english ? "Speaker \(index + 1)" : "Konuşmacı \(index + 1)")
             return (speaker, suggestion)
         })
     }

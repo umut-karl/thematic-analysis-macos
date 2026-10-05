@@ -91,8 +91,8 @@ struct DebugEvidenceReportView: View {
                     Divider()
                     VStack(alignment: .leading, spacing: 7) {
                         Text("Yöntemsel iz").font(.headline)
-                        Label("\(selectedTheme.codeIDs.count) koddan geliştirildi", systemImage: "tag")
-                        Label("\(Set(supportingEvidence.map(\.participantID)).count) farklı katılımcıya dayanıyor", systemImage: "person.2")
+                        Label(AppLocalization.string("\(selectedTheme.codeIDs.count) koddan geliştirildi"), systemImage: "tag")
+                        Label(AppLocalization.string("\(Set(supportingEvidence.map(\.participantID)).count) farklı katılımcıya dayanıyor"), systemImage: "person.2")
                         Label("Tema sınırı ve karşıt kanıt açıklandı", systemImage: "checkmark.seal")
                     }
                     .font(.callout)
@@ -139,7 +139,7 @@ private struct ReportOutlineRow: View {
             Text(number).font(.caption).fontWeight(.bold)
                 .frame(width: 22, height: 22)
                 .background(Color.accentColor.opacity(0.12), in: Circle())
-            Text(title).font(.callout).fixedSize(horizontal: false, vertical: true)
+            Text(verbatim: AppLocalization.string(title)).font(.callout).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 4)
             Image(systemName: isComplete ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(isComplete ? .green : .secondary)

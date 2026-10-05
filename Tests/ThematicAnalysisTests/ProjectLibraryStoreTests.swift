@@ -4,6 +4,29 @@ import XCTest
 
 final class ProjectLibraryStoreTests: XCTestCase {
     @MainActor
+    func testMigratesLegacyDefaultProjectNameToEnglish() throws {
+        let root = temporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let defaults = UserDefaults.standard
+        let previousLanguage = defaults.object(forKey: AppLocalization.languageKey)
+        defaults.set(AppLanguage.english.rawValue, forKey: AppLocalization.languageKey)
+        defer {
+            if let previousLanguage { defaults.set(previousLanguage, forKey: AppLocalization.languageKey) }
+            else { defaults.removeObject(forKey: AppLocalization.languageKey) }
+        }
+
+        let library = ProjectLibraryStore(storageRoot: root, includeDemoProject: false)
+        XCTAssertTrue(library.createProject(named: "Yeni Tematik Analiz"))
+        library.closeProject()
+
+        let reopened = ProjectLibraryStore(storageRoot: root, includeDemoProject: false)
+        XCTAssertEqual(reopened.projects.first?.name, "Untitled Project")
+        let item = try XCTUnwrap(reopened.projects.first)
+        reopened.openProject(item)
+        XCTAssertEqual(reopened.activeProjectStore?.project.name, "Untitled Project")
+    }
+
+    @MainActor
     func testLegacyProjectIsCopiedIntoLibraryOnlyOnce() throws {
         let root = temporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }

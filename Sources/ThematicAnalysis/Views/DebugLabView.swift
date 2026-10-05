@@ -443,7 +443,7 @@ struct MethodCaution: View {
     let text: String
     var body: some View {
         Label {
-            Text(text).fixedSize(horizontal: false, vertical: true)
+            Text(verbatim: AppLocalization.string(text)).fixedSize(horizontal: false, vertical: true)
         } icon: {
             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
         }

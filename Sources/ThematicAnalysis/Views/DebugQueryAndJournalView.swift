@@ -43,7 +43,7 @@ struct DebugComparisonQueryView: View {
                     .frame(width: 220)
 
                     Picker("Operatör", selection: $queryOperator) {
-                        ForEach(DebugQueryOperator.allCases) { Text($0.rawValue).tag($0) }
+                        ForEach(DebugQueryOperator.allCases) { Text(verbatim: AppLocalization.string($0.rawValue)).tag($0) }
                     }
                     .frame(width: 230)
 
@@ -55,8 +55,8 @@ struct DebugComparisonQueryView: View {
                     Divider().frame(height: 24)
 
                     Picker("Katılımcı grubu", selection: $usageGroup) {
-                        Text("Tüm gruplar").tag(Optional<String>.none)
-                        ForEach(usageGroups, id: \.self) { Text($0).tag(Optional($0)) }
+                        Text(verbatim: AppLocalization.string("Tüm gruplar")).tag(Optional<String>.none)
+                        ForEach(usageGroups, id: \.self) { Text(verbatim: AppLocalization.string($0)).tag(Optional($0)) }
                     }
                     .frame(width: 190)
                     Spacer()
@@ -130,8 +130,8 @@ private struct DebugQueryMetric: View {
         HStack(spacing: 10) {
             Image(systemName: symbol).foregroundStyle(.tint).frame(width: 20)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.caption).foregroundStyle(.secondary)
-                Text(value).font(.headline)
+                Text(verbatim: AppLocalization.string(title)).font(.caption).foregroundStyle(.secondary)
+                Text(verbatim: AppLocalization.string(value)).font(.headline)
             }
         }
         .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
@@ -202,12 +202,12 @@ struct DebugReflexiveJournalView: View {
                 Picker("Analiz aşaması", selection: $phaseFilter) {
                     Text("Tüm analiz aşamaları").tag(Optional<DebugJournalPhase>.none)
                     ForEach(DebugJournalPhase.allCases) { phase in
-                        Text(phase.rawValue).tag(Optional(phase))
+                        Text(verbatim: AppLocalization.string(phase.rawValue)).tag(Optional(phase))
                     }
                 }
                 .frame(width: 250)
                 Spacer()
-                Text("\(entries.count) günlük kaydı")
+                Text(verbatim: AppLocalization.string("\(entries.count) günlük kaydı"))
                     .font(.callout).foregroundStyle(.secondary)
             }
 
@@ -222,7 +222,7 @@ struct DebugReflexiveJournalView: View {
                                 }
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(entry.title).fontWeight(.semibold).multilineTextAlignment(.leading)
-                                    Text(entry.phase.rawValue).font(.caption).foregroundStyle(.secondary)
+                                    Text(verbatim: AppLocalization.string(entry.phase.rawValue)).font(.caption).foregroundStyle(.secondary)
                                     Text(entry.date, format: .dateTime.day().month(.abbreviated).year())
                                         .font(.caption2).foregroundStyle(.tertiary)
                                 }

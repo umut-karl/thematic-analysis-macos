@@ -62,9 +62,9 @@ private struct ProjectWelcomeView: View {
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 7) {
-                    Text("Tematik Analiz")
+                    Text(verbatim: AppLocalization.string("Tematik Analiz"))
                         .font(.system(size: 29, weight: .semibold))
-                    Text("Görüşmeleri düzenleyin, kodlayın ve temalar arasındaki ilişkileri keşfedin.")
+                    Text(verbatim: AppLocalization.string("Görüşmeleri düzenleyin, kodlayın ve temalar arasındaki ilişkileri keşfedin."))
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -76,7 +76,11 @@ private struct ProjectWelcomeView: View {
                 Button {
                     library.isCreatingProject = true
                 } label: {
-                    Label("Yeni Proje", systemImage: "plus")
+                    Label {
+                        Text(verbatim: AppLocalization.string("Yeni Proje"))
+                    } icon: {
+                        Image(systemName: "plus")
+                    }
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -86,7 +90,11 @@ private struct ProjectWelcomeView: View {
                 Button {
                     showImporter = true
                 } label: {
-                    Label("Proje Yedeği Aç…", systemImage: "folder")
+                    Label {
+                        Text(verbatim: AppLocalization.string("Proje Yedeği Aç…"))
+                    } icon: {
+                        Image(systemName: "folder")
+                    }
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
@@ -97,7 +105,11 @@ private struct ProjectWelcomeView: View {
             Spacer(minLength: 32)
 
             SettingsLink {
-                Label("Ayarlar", systemImage: "gearshape")
+                Label {
+                    Text(verbatim: AppLocalization.string("Ayarlar"))
+                } icon: {
+                    Image(systemName: "gearshape")
+                }
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
@@ -113,26 +125,21 @@ private struct ProjectWelcomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("Projeler")
+                    Text(verbatim: AppLocalization.string("Projeler"))
                         .font(.system(size: 27, weight: .semibold))
                     Spacer()
-                    Text(library.projects.count.formatted()) + Text(" proje")
+                    Text(verbatim: AppLocalization.string("\(library.projects.count) proje"))
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                Text("Son çalışmalarınız")
+                Text(verbatim: AppLocalization.string("Son çalışmalarınız"))
                     .font(.body)
                     .foregroundStyle(.secondary)
             }
             .padding(.bottom, 24)
 
             if library.sortedProjects.isEmpty {
-                ContentUnavailableView(
-                    "Henüz proje yok",
-                    systemImage: "rectangle.stack.badge.plus",
-                    description: Text("İlk tematik analiz projenizi oluşturun.")
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                emptyProjectLibrary
             } else {
                 ScrollView {
                     LazyVStack(spacing: 10) {
@@ -151,6 +158,79 @@ private struct ProjectWelcomeView: View {
         .padding(.horizontal, 42)
         .padding(.top, 48)
         .padding(.bottom, 22)
+    }
+
+    private var emptyProjectLibrary: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 52)
+
+            VStack(spacing: 18) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.10))
+                    Image(systemName: "rectangle.stack.badge.plus")
+                        .font(.system(size: 30, weight: .medium))
+                        .foregroundStyle(.tint)
+                }
+                .frame(width: 68, height: 68)
+                .accessibilityHidden(true)
+
+                VStack(spacing: 7) {
+                    Text(verbatim: AppLocalization.string("Henüz proje yok"))
+                        .font(.title2.weight(.semibold))
+                    Text(verbatim: AppLocalization.string("Yeni bir çalışma başlatın veya daha önce oluşturduğunuz proje yedeğini açın."))
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                HStack(spacing: 10) {
+                    Button {
+                        library.isCreatingProject = true
+                    } label: {
+                        Label {
+                            Text(verbatim: AppLocalization.string("Yeni Proje"))
+                        } icon: {
+                            Image(systemName: "plus")
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+
+                    Button {
+                        showImporter = true
+                    } label: {
+                        Label {
+                            Text(verbatim: AppLocalization.string("Yedekten Aç…"))
+                        } icon: {
+                            Image(systemName: "folder")
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                }
+
+                Label {
+                    Text(verbatim: AppLocalization.string("Projeleriniz bu Mac’te yerel olarak saklanır."))
+                } icon: {
+                    Image(systemName: "lock.shield")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: 520)
+            .padding(.horizontal, 44)
+            .padding(.vertical, 38)
+            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color(nsColor: .separatorColor).opacity(0.55), lineWidth: 1)
+            }
+
+            Spacer(minLength: 72)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -177,8 +257,9 @@ private struct ProjectLibraryRow: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                     Group {
-                        Text((project.participantCount ?? 0).formatted()) + Text(" katılımcı · ")
-                        + Text((project.codingUnitCount ?? 0).formatted()) + Text(" kodlama")
+                        Text(verbatim: AppLocalization.string(
+                            "\((project.participantCount ?? 0).formatted()) katılımcı · \((project.codingUnitCount ?? 0).formatted()) kodlama"
+                        ))
                     }
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -187,7 +268,7 @@ private struct ProjectLibraryRow: View {
                 Spacer(minLength: 24)
 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text("Son düzenleme")
+                    Text(verbatim: AppLocalization.string("Son düzenleme"))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                     Text(project.updatedAt, format: .dateTime.day().month(.abbreviated).year().hour().minute())
@@ -230,26 +311,26 @@ private struct NewProjectView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Yeni Tematik Analiz Projesi")
+                Text(verbatim: AppLocalization.string("Yeni Tematik Analiz Projesi"))
                     .font(.title2)
                     .fontWeight(.semibold)
-                Text("Katılımcılar, transkriptler, temalar ve kodlamalar bu projede birlikte saklanır.")
+                Text(verbatim: AppLocalization.string("Katılımcılar, transkriptler, temalar ve kodlamalar bu projede birlikte saklanır."))
                     .foregroundStyle(.secondary)
             }
 
             VStack(alignment: .leading, spacing: 7) {
-                Text("Proje adı")
+                Text(verbatim: AppLocalization.string("Proje adı"))
                     .font(.callout)
                     .fontWeight(.medium)
-                TextField("Örn. Yapay Zekâ Görüşmeleri", text: $name)
+                TextField(AppLocalization.string("Örn. Yapay Zekâ Görüşmeleri"), text: $name)
                     .textFieldStyle(.roundedBorder)
             }
 
             HStack {
-                Button("Vazgeç") { dismiss() }
+                Button(AppLocalization.string("Vazgeç")) { dismiss() }
                     .keyboardShortcut(.cancelAction)
                 Spacer()
-                Button("Proje Oluştur") {
+                Button(AppLocalization.string("Proje Oluştur")) {
                     if library.createProject(named: name) { dismiss() }
                 }
                 .buttonStyle(.borderedProminent)

@@ -4,15 +4,20 @@ import SwiftUI
 @main
 struct ThematicAnalysisApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @StateObject private var library = ProjectLibraryStore()
-    @AppStorage("appLanguage") private var appLanguage = AppLanguage.english.rawValue
+    @StateObject private var library: ProjectLibraryStore
+    @AppStorage(AppLocalization.languageKey) private var appLanguage = AppLanguage.english.rawValue
+
+    init() {
+        AppLocalization.applyEnglishDefaultMigrationIfNeeded()
+        _library = StateObject(wrappedValue: ProjectLibraryStore())
+    }
 
     private var locale: Locale {
         AppLanguage(rawValue: appLanguage)?.locale ?? AppLanguage.english.locale
     }
 
     var body: some Scene {
-        WindowGroup("Tematik Analiz", id: "main") {
+        WindowGroup(AppLocalization.string("Tematik Analiz"), id: "main") {
             AppRootView(library: library)
                 .frame(minWidth: 980, minHeight: 640)
                 .environment(\.locale, locale)

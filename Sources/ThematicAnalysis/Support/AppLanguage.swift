@@ -16,8 +16,18 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 }
 
 enum AppLocalization {
+    static let languageKey = "appLanguage"
+    private static let englishDefaultMigrationKey = "englishDefaultLanguageMigrationVersion"
+    private static let englishDefaultMigrationVersion = 1
+
+    static func applyEnglishDefaultMigrationIfNeeded(defaults: UserDefaults = .standard) {
+        guard defaults.integer(forKey: englishDefaultMigrationKey) < englishDefaultMigrationVersion else { return }
+        defaults.set(AppLanguage.english.rawValue, forKey: languageKey)
+        defaults.set(englishDefaultMigrationVersion, forKey: englishDefaultMigrationKey)
+    }
+
     static var language: AppLanguage {
-        AppLanguage(rawValue: UserDefaults.standard.string(forKey: "appLanguage") ?? "tr") ?? .turkish
+        AppLanguage(rawValue: UserDefaults.standard.string(forKey: languageKey) ?? AppLanguage.english.rawValue) ?? .english
     }
 
     static func string(_ source: String) -> String {
@@ -46,6 +56,8 @@ enum AppLocalization {
             ("Yedek oluşturuldu: ", "Backup created: "),
             ("Kaydetme hatası: ", "Save failed: "),
             ("API anahtarı kaydedilemedi: ", "Could not save API key: "),
+            ("Sürüm ", "Version "),
+            ("Sütunlar (", "Columns ("),
             (" satır tek satırda birleştirildi", " rows merged into one row"),
             (" transkript satırı silindi", " transcript row(s) deleted"),
             (" satırlık GPT transkripsiyonu eklendi", " GPT transcript row(s) added"),
@@ -54,6 +66,7 @@ enum AppLocalization {
             (" teması eklendi", " theme added"),
             (" bilgileri güncellendi", " details updated"),
             (" için ", " — "),
+            (" proje", " project(s)"),
             (" katılımcı", " participant(s)"),
             (" kodlama birimi", " coding unit(s)"),
             (" kodlama görünümü", " coding occurrence(s)"),
@@ -64,7 +77,16 @@ enum AppLocalization {
             (" tema", " theme(s)"),
             (" görünüm", " occurrence(s)"),
             (" matris puanı", " matrix score"),
+            (" günlük kaydı", " journal entry/entries"),
+            (" tema taslağı", " theme draft(s)"),
+            (" destekleyici alıntı", " supporting excerpt(s)"),
+            (" karşıt alıntı", " contradictory excerpt(s)"),
+            (" karşıt", " contradictory"),
+            (" koddan geliştirildi", " code(s) developed into this theme"),
+            (" farklı katılımcıya dayanıyor", " participants represented"),
             (" alıntı", " excerpt(s)"),
+            (" kanıt", " evidence item(s)"),
+            (" kod", " code(s)"),
             (" eklendi", " added"),
             (" içe aktarıldı", " imported"),
             (" güncellendi", " updated"),

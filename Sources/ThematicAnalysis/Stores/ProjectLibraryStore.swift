@@ -143,6 +143,7 @@ final class ProjectLibraryStore: ObservableObject {
         projects = index.projects.filter {
             fileManager.fileExists(atPath: projectRoot(for: $0).appendingPathComponent("active-project.json").path)
         }
+        migrateDefaultProjectNamesIfNeeded()
     }
 
     private func migrateLegacyProjectIfNeeded() {
@@ -176,7 +177,11 @@ final class ProjectLibraryStore: ObservableObject {
         for index in projects.indices {
             let url = projectRoot(for: projects[index]).appendingPathComponent("active-project.json")
             guard let data = try? Data(contentsOf: url),
-                  let project = try? JSONDecoder.tematik.decode(AnalysisProject.self, from: data) else { continue }
+                  var project = try? JSONDecoder.tematik.decode(AnalysisProject.self, from: data) else { continue }
+            if AppLocalization.language == .english, project.name == "Yeni Tematik Analiz" {
+                project.name = "Untitled Project"
+                try? JSONEncoder.tematik.encode(project).write(to: url, options: .atomic)
+            }
             let participantCount = project.interviews.count
             let codingUnitCount = project.interviews.reduce(0) { $0 + $1.codingUnits.count }
             if projects[index].name != project.name
@@ -189,6 +194,16 @@ final class ProjectLibraryStore: ObservableObject {
                 projects[index].codingUnitCount = codingUnitCount
                 changed = true
             }
+        }
+        if changed { persistIndex() }
+    }
+
+    private func migrateDefaultProjectNamesIfNeeded() {
+        guard AppLocalization.language == .english else { return }
+        var changed = false
+        for index in projects.indices where projects[index].name == "Yeni Tematik Analiz" {
+            projects[index].name = "Untitled Project"
+            changed = true
         }
         if changed { persistIndex() }
     }

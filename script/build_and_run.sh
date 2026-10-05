@@ -47,11 +47,11 @@ cat >"$INFO_PLIST" <<PLIST
 <dict>
   <key>CFBundleExecutable</key><string>$APP_NAME</string>
   <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
-  <key>CFBundleName</key><string>$APP_NAME</string>
+  <key>CFBundleName</key><string>Thematic Analysis</string>
   <key>CFBundleDisplayName</key><string>Thematic Analysis</string>
   <key>CFBundleDevelopmentRegion</key><string>en</string>
   <key>CFBundleLocalizations</key>
-  <array><string>en</string></array>
+  <array><string>en</string><string>tr</string></array>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSMinimumSystemVersion</key><string>$MIN_SYSTEM_VERSION</string>

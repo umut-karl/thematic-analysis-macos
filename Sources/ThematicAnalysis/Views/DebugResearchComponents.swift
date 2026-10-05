@@ -14,8 +14,8 @@ struct DebugSectionTitle: View {
                     .frame(width: 22)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.title3).fontWeight(.semibold)
-                Text(subtitle).font(.callout).foregroundStyle(.secondary)
+                Text(verbatim: AppLocalization.string(title)).font(.title3).fontWeight(.semibold)
+                Text(verbatim: AppLocalization.string(subtitle)).font(.callout).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -28,7 +28,11 @@ struct DebugMetadataPill: View {
     var tint: Color = .accentColor
 
     var body: some View {
-        Label(title, systemImage: symbol)
+        Label {
+            Text(verbatim: AppLocalization.string(title))
+        } icon: {
+            Image(systemName: symbol)
+        }
             .font(.caption)
             .padding(.horizontal, 8)
             .padding(.vertical, 5)
@@ -51,7 +55,7 @@ struct DebugExcerptCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 7) {
                 Circle().fill(participantColor).frame(width: 8, height: 8)
-                Text(participant?.name ?? "Bilinmeyen katılımcı").fontWeight(.semibold)
+                Text(verbatim: participant?.name ?? AppLocalization.string("Bilinmeyen katılımcı")).fontWeight(.semibold)
                 if let role = participant?.role {
                     Text(role).foregroundStyle(.secondary)
                 }
@@ -98,7 +102,11 @@ struct DebugEmptyState: View {
     let message: String
 
     var body: some View {
-        ContentUnavailableView(title, systemImage: "magnifyingglass", description: Text(message))
+        ContentUnavailableView(
+            AppLocalization.string(title),
+            systemImage: "magnifyingglass",
+            description: Text(verbatim: AppLocalization.string(message))
+        )
             .frame(maxWidth: .infinity, minHeight: 220)
     }
 }

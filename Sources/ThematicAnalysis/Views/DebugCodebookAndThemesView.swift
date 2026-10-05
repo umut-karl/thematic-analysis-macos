@@ -40,8 +40,8 @@ struct DebugLabOverviewView: View {
                 .foregroundStyle(.tint)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 5) {
-                Text(title).fontWeight(.semibold)
-                Text(description).font(.callout).foregroundStyle(.secondary)
+                Text(verbatim: AppLocalization.string(title)).fontWeight(.semibold)
+                Text(verbatim: AppLocalization.string(description)).font(.callout).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -92,12 +92,12 @@ struct DebugCodebookView: View {
                 Picker("Durum", selection: $statusFilter) {
                     Text("Tüm durumlar").tag(Optional<DebugCodeStatus>.none)
                     ForEach(DebugCodeStatus.allCases) { status in
-                        Text(status.rawValue).tag(Optional(status))
+                        Text(verbatim: AppLocalization.string(status.rawValue)).tag(Optional(status))
                     }
                 }
                 .frame(width: 180)
                 Spacer()
-                Text("\(filteredCodes.count) / \(dataset.codebook.count) kod")
+                Text(verbatim: AppLocalization.string("\(filteredCodes.count) / \(dataset.codebook.count) kod"))
                     .font(.callout).foregroundStyle(.secondary)
             }
 
@@ -109,7 +109,7 @@ struct DebugCodebookView: View {
                                 Circle().fill(ThemePalette.color(code.colorIndex)).frame(width: 8, height: 8)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(code.name).fontWeight(code.parentID == nil ? .semibold : .regular)
-                                    Text(code.parentID == nil ? "Ana kod" : "Alt kod")
+                                    Text(verbatim: AppLocalization.string(code.parentID == nil ? "Ana kod" : "Alt kod"))
                                         .font(.caption2).foregroundStyle(.secondary)
                                 }
                                 .padding(.leading, code.parentID == nil ? 0 : 15)
@@ -144,7 +144,7 @@ private struct CodeStatusBadge: View {
     let status: DebugCodeStatus
 
     var body: some View {
-        Text(status.rawValue)
+        Text(verbatim: AppLocalization.string(status.rawValue))
             .font(.caption2).fontWeight(.medium)
             .padding(.horizontal, 6).padding(.vertical, 3)
             .background(color.opacity(0.12), in: Capsule())
@@ -193,7 +193,7 @@ private struct CodebookDetailCard: View {
             detailSection("Kod kitabı örneği", "“\(code.example)”", "quote.opening")
 
             Divider()
-            Text("Bağlı örnek alıntılar · \(examples.count)")
+            Text(verbatim: "\(AppLocalization.string("Bağlı örnek alıntılar")) · \(examples.count)")
                 .font(.headline)
             ForEach(examples.prefix(2)) { excerpt in
                 DebugExcerptCard(excerpt: excerpt, dataset: dataset)
@@ -257,7 +257,7 @@ private struct ThemeStageColumn: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(stage.rawValue).fontWeight(.semibold)
+                Text(verbatim: AppLocalization.string(stage.rawValue)).fontWeight(.semibold)
                 Spacer()
                 Text(themes.count.formatted()).font(.caption).foregroundStyle(.secondary)
             }
@@ -307,7 +307,7 @@ private struct ThemeDevelopmentDetail: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(theme.title).font(.title2).fontWeight(.semibold)
-                    Text(theme.stage.rawValue).foregroundStyle(.secondary)
+                    Text(verbatim: AppLocalization.string(theme.stage.rawValue)).foregroundStyle(.secondary)
                 }
                 Spacer()
                 DebugMetadataPill(title: "\(theme.evidenceIDs.count) destekleyici", symbol: "checkmark.quote", tint: .green)
