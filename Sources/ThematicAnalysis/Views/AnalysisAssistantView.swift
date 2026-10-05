@@ -134,10 +134,10 @@ struct AnalysisAssistantView: View {
         HSplitView {
             if showsConversationSidebar {
                 conversationSidebar
-                    .frame(minWidth: 170, idealWidth: 220, maxWidth: 340)
+                    .frame(minWidth: 200, idealWidth: 230, maxWidth: 260)
             }
             assistantDetail
-                .frame(minWidth: 560)
+                .frame(minWidth: 640)
         }
         .fileImporter(
             isPresented: $isImportingFiles,
@@ -233,6 +233,7 @@ struct AnalysisAssistantView: View {
                 }
             }
             .listStyle(.sidebar)
+            .scrollContentBackground(.hidden)
 
             if !conversationStore.persistenceError.isEmpty {
                 Label(conversationStore.persistenceError, systemImage: "exclamationmark.triangle.fill")
@@ -241,7 +242,7 @@ struct AnalysisAssistantView: View {
                     .padding(10)
             }
         }
-        .background(.bar)
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var header: some View {
