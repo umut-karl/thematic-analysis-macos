@@ -32,8 +32,14 @@ if [[ -d "$RESOURCE_BUNDLE" ]]; then
   # SwiftPM's generated Bundle.module accessor resolves the resource bundle
   # relative to Bundle.main.bundleURL for a staged GUI application.
   cp -R "$RESOURCE_BUNDLE" "$APP_BUNDLE/"
-  # Mirror any package localizations into the staged application resources.
-  for LOCALIZATION_DIR in "$RESOURCE_BUNDLE"/*.lproj; do
+  # SwiftPM may place processed resources at the bundle root or under
+  # Contents/Resources. Mirror both layouts into Bundle.main so SwiftUI's
+  # implicit LocalizedStringKey lookup follows the in-app language setting.
+  RESOURCE_ROOT="$RESOURCE_BUNDLE"
+  if [[ -d "$RESOURCE_BUNDLE/Contents/Resources" ]]; then
+    RESOURCE_ROOT="$RESOURCE_BUNDLE/Contents/Resources"
+  fi
+  for LOCALIZATION_DIR in "$RESOURCE_ROOT"/*.lproj; do
     [[ -d "$LOCALIZATION_DIR" ]] || continue
     cp -R "$LOCALIZATION_DIR" "$APP_RESOURCES/"
   done

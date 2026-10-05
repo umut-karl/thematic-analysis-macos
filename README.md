@@ -30,6 +30,9 @@ The interface can be switched between English and Turkish from Settings.
 
 ## Latest update — October 5, 2026
 
+- Analysis Assistant is now a dedicated workspace with chat history, editable
+  project context, saved analyses, clickable follow-up questions, and review
+  decisions for every AI response.
 - The native app now launches in English by default, including a one-time
   migration for earlier installations that inherited the Turkish default.
 - Dynamic labels and status text now use the selected app language reliably;
@@ -40,6 +43,33 @@ The interface can be switched between English and Turkish from Settings.
   **Untitled Project** without changing researcher-authored project names.
 - Additional analysis, context, codebook, journal, and reporting labels were
   audited for consistent English and Turkish presentation.
+
+## AI-assisted analysis, with researcher control
+
+Analysis Assistant is an evidence-linked workspace for thinking with the data,
+not an autonomous finding generator. The researcher remains responsible for
+interpretation and can see how each response was produced and what evidence it
+uses.
+
+- Start method-neutral with **Talk with the data**, or apply reflexive thematic
+  analysis, codebook, Framework, or coding-reliability guidance when the study
+  calls for it.
+- Define the research question, theoretical or epistemological approach,
+  researcher positionality, unit of analysis, exclusions, data scope, and
+  surrounding transcript context in the editable **Context** workspace.
+- Open verified evidence links directly in the source transcript. Evidence IDs
+  not present in the supplied project context are rejected rather than shown as
+  citations.
+- Continue the analysis from clickable follow-up questions while retaining the
+  model, method profile, and prompt-version provenance for each response.
+- Mark an output as accepted, needing revision, or rejected, then save reviewed
+  responses as Markdown memos. An AI response never becomes a researcher
+  decision automatically.
+
+![Analysis Assistant with evidence-linked interpretation, follow-up questions, provenance, review status, and memo controls](docs/screenshots/ai-assistant.png)
+
+The screenshot uses the repository's synthetic demo project. It contains no
+real participant, transcript, or project information.
 
 ## Built-in demo
 

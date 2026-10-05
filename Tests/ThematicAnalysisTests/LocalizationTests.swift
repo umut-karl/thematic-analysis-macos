@@ -51,6 +51,7 @@ final class LocalizationTests: XCTestCase {
             XCTAssertEqual(AppLocalization.string("Bağlam: Belirlendi"), "Context: Set")
             XCTAssertEqual(AppLocalization.string("Bağlam: Belirlenmedi"), "Context: Not set")
             XCTAssertEqual(AppLocalization.string("Araştırmacı kararı"), "Researcher decision")
+            XCTAssertEqual(AppLocalization.string("istem"), "prompt")
             XCTAssertEqual(
                 AppLocalization.string("En güçlü temalar ve bunları destekleyen kanıtlar neler?"),
                 "What are the strongest themes and the evidence supporting them?"

@@ -751,7 +751,7 @@ private struct AssistantResponseView: View {
                 Divider()
                 HStack(spacing: 10) {
                     Label(
-                        "\(provenance.modelID) · \(provenance.methodProfileID) · istem \(provenance.promptVersion)",
+                        "\(provenance.modelID) · \(provenance.methodProfileID) · \(AppLocalization.string("istem")) \(provenance.promptVersion)",
                         systemImage: "checkmark.shield"
                     )
                     .font(.caption2)
