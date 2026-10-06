@@ -95,6 +95,7 @@ struct AnalysisAssistantView: View {
     @State private var renameDraft = ""
     @State private var conversationToRename: UUID?
     @State private var conversationToDelete: UUID?
+    @State private var showsCompactHistory = false
     @FocusState private var composerFocused: Bool
 
     init(
@@ -131,13 +132,20 @@ struct AnalysisAssistantView: View {
     }
 
     var body: some View {
-        HSplitView {
-            if showsConversationSidebar {
-                conversationSidebar
-                    .frame(minWidth: 200, idealWidth: 230, maxWidth: 260)
+        GeometryReader { proxy in
+            // Account for the app's primary navigation sidebar as well as the
+            // conversation list. At the minimum window width, preserving the
+            // chat is more important than keeping both sidebars visible.
+            let usesCompactLayout = proxy.size.width < 1_100
+
+            HSplitView {
+                if showsConversationSidebar && !usesCompactLayout {
+                    conversationSidebar
+                        .frame(minWidth: 200, idealWidth: 230, maxWidth: 260)
+                }
+                assistantDetail(usesCompactLayout: usesCompactLayout)
+                    .frame(minWidth: usesCompactLayout ? 0 : 640)
             }
-            assistantDetail
-                .frame(minWidth: 640)
         }
         .fileImporter(
             isPresented: $isImportingFiles,
@@ -188,9 +196,9 @@ struct AnalysisAssistantView: View {
         }
     }
 
-    private var assistantDetail: some View {
+    private func assistantDetail(usesCompactLayout: Bool) -> some View {
         VStack(spacing: 0) {
-            header
+            header(usesCompactLayout: usesCompactLayout)
             Divider()
 
             if !hasOpenAIAPIKey {
@@ -245,18 +253,26 @@ struct AnalysisAssistantView: View {
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
-    private var header: some View {
+    private func header(usesCompactLayout: Bool) -> some View {
         HStack(alignment: .center, spacing: 12) {
             Button {
-                withAnimation(.easeInOut(duration: 0.18)) {
-                    showsConversationSidebar.toggle()
+                if usesCompactLayout {
+                    showsCompactHistory.toggle()
+                } else {
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        showsConversationSidebar.toggle()
+                    }
                 }
             } label: {
                 Image(systemName: "sidebar.left")
                     .frame(width: 22, height: 22)
             }
             .buttonStyle(.borderless)
-            .help(showsConversationSidebar ? "Konuşma geçmişini gizle" : "Konuşma geçmişini göster")
+            .help(usesCompactLayout ? "Konuşma geçmişini aç" : (showsConversationSidebar ? "Konuşma geçmişini gizle" : "Konuşma geçmişini göster"))
+            .popover(isPresented: $showsCompactHistory, arrowEdge: .leading) {
+                conversationSidebar
+                    .frame(width: 280, height: 520)
+            }
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("Analiz Asistanı")

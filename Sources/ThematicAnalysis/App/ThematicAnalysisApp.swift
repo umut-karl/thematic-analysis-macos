@@ -19,7 +19,7 @@ struct ThematicAnalysisApp: App {
     var body: some Scene {
         WindowGroup(AppLocalization.string("Tematik Analiz"), id: "main") {
             AppRootView(library: library)
-                .frame(minWidth: 980, minHeight: 640)
+                .frame(minWidth: 1_180, minHeight: 640)
                 .environment(\.locale, locale)
         }
         .defaultSize(width: 1320, height: 820)
