@@ -146,6 +146,11 @@ struct AnalysisAssistantView: View {
                 assistantDetail(usesCompactLayout: usesCompactLayout)
                     .frame(minWidth: usesCompactLayout ? 0 : 640)
             }
+            .frame(
+                width: proxy.size.width,
+                height: proxy.size.height,
+                alignment: .topLeading
+            )
         }
         .fileImporter(
             isPresented: $isImportingFiles,
