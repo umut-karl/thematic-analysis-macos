@@ -31,6 +31,10 @@ enum AppLocalization {
     }
 
     static func string(_ source: String) -> String {
+        string(source, language: language)
+    }
+
+    static func string(_ source: String, language: AppLanguage) -> String {
         guard language == .english,
               let path = Bundle.module.path(forResource: "en", ofType: "lproj"),
               let bundle = Bundle(path: path) else { return source }

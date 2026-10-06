@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @ObservedObject var store: AnalysisStore
     let onShowProjects: () -> Void
+    @AppStorage(AppLocalization.languageKey) private var appLanguage = AppLanguage.english.rawValue
     @StateObject private var assistantWorkspace: AnalysisAssistantWorkspaceStore
     @State private var section: WorkspaceSection? = .participants
     @State private var showProjectRestore = false
@@ -15,6 +16,14 @@ struct ContentView: View {
         _assistantWorkspace = StateObject(
             wrappedValue: AnalysisAssistantWorkspaceStore(storageRoot: store.storageRoot)
         )
+    }
+
+    private var selectedLanguage: AppLanguage {
+        AppLanguage(rawValue: appLanguage) ?? .english
+    }
+
+    private var navigationTitle: String {
+        AppLocalization.string(section?.rawValue ?? "Tematik Analiz", language: selectedLanguage)
     }
 
     var body: some View {
@@ -68,7 +77,7 @@ struct ContentView: View {
                     )
                 }
             }
-            .navigationTitle(AppLocalization.string(section?.rawValue ?? "Tematik Analiz"))
+            .navigationTitle(navigationTitle)
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
                     if section != .addParticipant {

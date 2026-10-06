@@ -4,37 +4,27 @@ struct AnalysisAssistantContextView: View {
     @ObservedObject var workspace: AnalysisAssistantWorkspaceStore
     let project: AnalysisProject
     let themePath: (UUID) -> String
+    @AppStorage(AppLocalization.languageKey) private var appLanguage = AppLanguage.english.rawValue
+
+    private var selectedLanguage: AppLanguage {
+        AppLanguage(rawValue: appLanguage) ?? .english
+    }
 
     private func localized(_ source: String) -> String {
-        AppLocalization.string(source)
+        AppLocalization.string(source, language: selectedLanguage)
     }
 
     private var surroundingRowsTitle: String {
         let count = workspace.scope.surroundingRowCount
-        if AppLocalization.language == .english {
+        if selectedLanguage == .english {
             return "\(count) transcript row(s) before and after each item of evidence"
         }
         return "Kanıt çevresinde \(count) önceki/sonraki transkript satırı"
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(verbatim: localized("Analiz Bağlamı"))
-                        .font(.title2.weight(.semibold))
-                    Text(verbatim: localized("Bu bilgiler ve seçtiğiniz veri kapsamı sonraki asistan yanıtlarına eklenir."))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
-            .padding(24)
-
-            Divider()
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
                     contextSection(title: localized("Analiz Brifi")) {
                         ContextMultilineField(
                             title: localized("Araştırma sorusu"),
@@ -110,11 +100,10 @@ struct AnalysisAssistantContextView: View {
                         Label(workspace.persistenceError, systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.red)
                     }
-                }
-                .frame(maxWidth: 760)
-                .padding(32)
-                .frame(maxWidth: .infinity, alignment: .top)
             }
+            .frame(maxWidth: 760)
+            .padding(32)
+            .frame(maxWidth: .infinity, alignment: .top)
         }
         .frame(minWidth: 560, minHeight: 500)
         .onAppear { workspace.normalize(for: project) }

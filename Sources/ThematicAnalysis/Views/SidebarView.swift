@@ -3,6 +3,15 @@ import SwiftUI
 struct SidebarView: View {
     @Binding var selection: WorkspaceSection?
     let onShowProjects: () -> Void
+    @AppStorage(AppLocalization.languageKey) private var appLanguage = AppLanguage.english.rawValue
+
+    private var selectedLanguage: AppLanguage {
+        AppLanguage(rawValue: appLanguage) ?? .english
+    }
+
+    private func localized(_ source: String) -> String {
+        AppLocalization.string(source, language: selectedLanguage)
+    }
 
     var body: some View {
         List(selection: $selection) {
@@ -39,16 +48,16 @@ struct SidebarView: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 2) {
                 Button(action: onShowProjects) {
-                    SidebarFooterLabel(title: "Proje Kütüphanesi", systemImage: "square.grid.2x2")
+                    SidebarFooterLabel(title: localized("Proje Kütüphanesi"), systemImage: "square.grid.2x2")
                 }
                 .buttonStyle(.plain)
-                .help("Başka bir projeyi aç")
+                .help(localized("Başka bir projeyi aç"))
 
                 SettingsLink {
-                    SidebarFooterLabel(title: "Ayarlar", systemImage: "gearshape")
+                    SidebarFooterLabel(title: localized("Ayarlar"), systemImage: "gearshape")
                 }
                 .buttonStyle(.plain)
-                .help("API anahtarı ve uygulama ayarlarını aç")
+                .help(localized("API anahtarı ve uygulama ayarlarını aç"))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(8)
@@ -66,7 +75,7 @@ private struct SidebarFooterLabel: View {
 
     var body: some View {
         Label {
-            Text(verbatim: AppLocalization.string(title))
+            Text(verbatim: title)
         } icon: {
             Image(systemName: systemImage)
         }

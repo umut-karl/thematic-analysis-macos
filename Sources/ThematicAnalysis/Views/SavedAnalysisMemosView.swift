@@ -3,6 +3,7 @@ import SwiftUI
 struct SavedAnalysisMemosView: View {
     @StateObject private var memoStore: SavedAnalysisMemoStore
     @State private var query = ""
+    @AppStorage(AppLocalization.languageKey) private var appLanguage = AppLanguage.english.rawValue
 
     init(storageRoot: URL) {
         _memoStore = StateObject(wrappedValue: SavedAnalysisMemoStore(storageRoot: storageRoot))
@@ -17,10 +18,25 @@ struct SavedAnalysisMemosView: View {
         }
     }
 
+    private var selectedLanguage: AppLanguage {
+        AppLanguage(rawValue: appLanguage) ?? .english
+    }
+
+    private func localized(_ source: String) -> String {
+        AppLocalization.string(source, language: selectedLanguage)
+    }
+
+    private var memoCountTitle: String {
+        if selectedLanguage == .english {
+            return memoStore.memos.count == 1 ? "1 saved analysis" : "\(memoStore.memos.count) saved analyses"
+        }
+        return "\(memoStore.memos.count) kayıtlı analiz"
+    }
+
     var body: some View {
         HSplitView {
             memoList
-                .frame(minWidth: 230, idealWidth: 280, maxWidth: 380)
+                .frame(minWidth: 250, idealWidth: 280, maxWidth: 320)
             memoDetail
                 .frame(minWidth: 520)
         }
@@ -35,9 +51,9 @@ struct SavedAnalysisMemosView: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Kaydedilen Analizler")
+                        Text(verbatim: localized("Kaydedilen Analizler"))
                             .font(.title3.weight(.semibold))
-                        (Text(memoStore.memos.count.formatted()) + Text(" kayıtlı analiz"))
+                        Text(verbatim: memoCountTitle)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -48,13 +64,13 @@ struct SavedAnalysisMemosView: View {
                         Image(systemName: "arrow.clockwise")
                     }
                     .buttonStyle(.borderless)
-                    .help("Kaydedilen analizleri yenile")
+                    .help(localized("Kaydedilen analizleri yenile"))
                 }
 
                 HStack(spacing: 7) {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.secondary)
-                    TextField("Kaydedilen analizlerde ara", text: $query)
+                    TextField(localized("Kaydedilen analizlerde ara"), text: $query)
                         .textFieldStyle(.plain)
                     if !query.isEmpty {
                         Button {
@@ -64,7 +80,7 @@ struct SavedAnalysisMemosView: View {
                         }
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
-                        .accessibilityLabel("Aramayı temizle")
+                        .accessibilityLabel(localized("Aramayı temizle"))
                     }
                 }
                 .padding(.horizontal, 9)
@@ -79,25 +95,14 @@ struct SavedAnalysisMemosView: View {
 
             List(selection: $memoStore.selectedMemoID) {
                 ForEach(filteredMemos) { memo in
-                    SavedMemoRow(memo: memo)
+                    SavedMemoRow(memo: memo, language: selectedLanguage)
                         .tag(memo.id)
                 }
             }
             .listStyle(.sidebar)
             .overlay {
                 if filteredMemos.isEmpty {
-                    ContentUnavailableView {
-                        Label(
-                            query.isEmpty ? "Henüz kaydedilmiş analiz yok" : "Eşleşen analiz yok",
-                            systemImage: query.isEmpty ? "tray" : "magnifyingglass"
-                        )
-                    } description: {
-                        Text(
-                            query.isEmpty
-                                ? "Analiz Asistanı yanıtındaki “Memo olarak kaydet” düğmesini kullanın."
-                                : "Arama ifadesini değiştirin veya temizleyin."
-                        )
-                    }
+                    compactEmptyState
                 }
             }
 
@@ -108,24 +113,54 @@ struct SavedAnalysisMemosView: View {
                     .padding(10)
             }
         }
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    private var compactEmptyState: some View {
+        VStack(spacing: 8) {
+            Image(systemName: query.isEmpty ? "tray" : "magnifyingglass")
+                .font(.title2)
+                .foregroundStyle(.tertiary)
+            Text(verbatim: localized(query.isEmpty ? "Henüz kaydedilmiş analiz yok" : "Eşleşen analiz yok"))
+                .font(.headline)
+                .multilineTextAlignment(.center)
+            Text(verbatim: localized(
+                query.isEmpty
+                    ? "Analiz Asistanı yanıtındaki “Memo olarak kaydet” düğmesini kullanın."
+                    : "Arama ifadesini değiştirin veya temizleyin."
+            ))
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+        }
+        .padding(24)
+        .frame(maxWidth: 280)
     }
 
     @ViewBuilder
     private var memoDetail: some View {
         if let memo = memoStore.selectedMemo {
-            SavedMemoDetail(memo: memo)
+            SavedMemoDetail(memo: memo, language: selectedLanguage)
         } else {
-            ContentUnavailableView(
-                "Bir analiz seçin",
-                systemImage: "doc.text.magnifyingglass",
-                description: Text("Kaydedilmiş analiz notunun içeriği burada görüntülenir.")
-            )
+            VStack(spacing: 12) {
+                Image(systemName: "doc.text.magnifyingglass")
+                    .font(.system(size: 38, weight: .light))
+                    .foregroundStyle(.tertiary)
+                Text(verbatim: localized("Bir analiz seçin"))
+                    .font(.title2.weight(.semibold))
+                Text(verbatim: localized("Kaydedilmiş analiz notunun içeriği burada görüntülenir."))
+                    .foregroundStyle(.secondary)
+            }
+            .multilineTextAlignment(.center)
+            .padding(32)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
 
 private struct SavedMemoRow: View {
     let memo: SavedAnalysisMemo
+    let language: AppLanguage
 
     var body: some View {
         HStack(alignment: .top, spacing: 9) {
@@ -140,7 +175,7 @@ private struct SavedMemoRow: View {
                 HStack(spacing: 5) {
                     Text(memo.createdAt.formatted(
                         Date.FormatStyle(date: .abbreviated, time: .shortened)
-                            .locale(AppLocalization.language.locale)
+                            .locale(language.locale)
                     ))
                     if !memo.modelID.isEmpty {
                         Text("·")
@@ -158,12 +193,17 @@ private struct SavedMemoRow: View {
 
 private struct SavedMemoDetail: View {
     let memo: SavedAnalysisMemo
+    let language: AppLanguage
+
+    private func localized(_ source: String) -> String {
+        AppLocalization.string(source, language: language)
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 7) {
-                    Label("Kaydedilmiş analiz", systemImage: "tray.full")
+                    Label(localized("Kaydedilmiş analiz"), systemImage: "tray.full")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Text(memo.title)
@@ -178,14 +218,14 @@ private struct SavedMemoDetail: View {
                         }
                         if !memo.promptVersion.isEmpty {
                             MemoMetadataPill(
-                                title: AppLocalization.string("İstem") + " " + memo.promptVersion,
+                                title: localized("İstem") + " " + memo.promptVersion,
                                 symbol: "checkmark.shield"
                             )
                         }
                         MemoMetadataPill(
                             title: memo.createdAt.formatted(
                                 Date.FormatStyle(date: .abbreviated, time: .shortened)
-                                    .locale(AppLocalization.language.locale)
+                                    .locale(language.locale)
                             ),
                             symbol: "calendar"
                         )
@@ -193,7 +233,7 @@ private struct SavedMemoDetail: View {
                 }
 
                 Label {
-                    Text("Bu içerik AI destekli bir analiz notudur; araştırmacı değerlendirmesi olmadan nihai bulgu sayılmaz.")
+                    Text(verbatim: localized("Bu içerik AI destekli bir analiz notudur; araştırmacı değerlendirmesi olmadan nihai bulgu sayılmaz."))
                 } icon: {
                     Image(systemName: "person.badge.shield.checkmark")
                         .foregroundStyle(.tint)

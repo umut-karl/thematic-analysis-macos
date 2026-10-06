@@ -21,7 +21,16 @@ struct AppRootView: View {
 
 private struct ProjectWelcomeView: View {
     @ObservedObject var library: ProjectLibraryStore
+    @AppStorage(AppLocalization.languageKey) private var appLanguage = AppLanguage.english.rawValue
     @State private var showImporter = false
+
+    private var selectedLanguage: AppLanguage {
+        AppLanguage(rawValue: appLanguage) ?? .english
+    }
+
+    private func localized(_ source: String) -> String {
+        AppLocalization.string(source, language: selectedLanguage)
+    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -62,9 +71,9 @@ private struct ProjectWelcomeView: View {
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 7) {
-                    Text(verbatim: AppLocalization.string("Tematik Analiz"))
+                    Text(verbatim: localized("Tematik Analiz"))
                         .font(.system(size: 29, weight: .semibold))
-                    Text(verbatim: AppLocalization.string("Görüşmeleri düzenleyin, kodlayın ve temalar arasındaki ilişkileri keşfedin."))
+                    Text(verbatim: localized("Görüşmeleri düzenleyin, kodlayın ve temalar arasındaki ilişkileri keşfedin."))
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -77,7 +86,7 @@ private struct ProjectWelcomeView: View {
                     library.isCreatingProject = true
                 } label: {
                     Label {
-                        Text(verbatim: AppLocalization.string("Yeni Proje"))
+                        Text(verbatim: localized("Yeni Proje"))
                     } icon: {
                         Image(systemName: "plus")
                     }
@@ -91,7 +100,7 @@ private struct ProjectWelcomeView: View {
                     showImporter = true
                 } label: {
                     Label {
-                        Text(verbatim: AppLocalization.string("Proje Yedeği Aç…"))
+                        Text(verbatim: localized("Proje Yedeği Aç…"))
                     } icon: {
                         Image(systemName: "folder")
                     }
@@ -106,7 +115,7 @@ private struct ProjectWelcomeView: View {
 
             SettingsLink {
                 Label {
-                    Text(verbatim: AppLocalization.string("Ayarlar"))
+                    Text(verbatim: localized("Ayarlar"))
                 } icon: {
                     Image(systemName: "gearshape")
                 }
@@ -125,14 +134,14 @@ private struct ProjectWelcomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(verbatim: AppLocalization.string("Projeler"))
+                    Text(verbatim: localized("Projeler"))
                         .font(.system(size: 27, weight: .semibold))
                     Spacer()
-                    Text(verbatim: AppLocalization.string("\(library.projects.count) proje"))
+                    Text(verbatim: localized("\(library.projects.count) proje"))
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                Text(verbatim: AppLocalization.string("Son çalışmalarınız"))
+                Text(verbatim: localized("Son çalışmalarınız"))
                     .font(.body)
                     .foregroundStyle(.secondary)
             }
@@ -144,7 +153,7 @@ private struct ProjectWelcomeView: View {
                 ScrollView {
                     LazyVStack(spacing: 10) {
                         ForEach(library.sortedProjects) { project in
-                            ProjectLibraryRow(project: project) {
+                            ProjectLibraryRow(project: project, language: selectedLanguage) {
                                 library.openProject(project)
                             }
                         }
@@ -176,9 +185,9 @@ private struct ProjectWelcomeView: View {
                 .accessibilityHidden(true)
 
                 VStack(spacing: 7) {
-                    Text(verbatim: AppLocalization.string("Henüz proje yok"))
+                    Text(verbatim: localized("Henüz proje yok"))
                         .font(.title2.weight(.semibold))
-                    Text(verbatim: AppLocalization.string("Yeni bir çalışma başlatın veya daha önce oluşturduğunuz proje yedeğini açın."))
+                    Text(verbatim: localized("Yeni bir çalışma başlatın veya daha önce oluşturduğunuz proje yedeğini açın."))
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -190,7 +199,7 @@ private struct ProjectWelcomeView: View {
                         library.isCreatingProject = true
                     } label: {
                         Label {
-                            Text(verbatim: AppLocalization.string("Yeni Proje"))
+                            Text(verbatim: localized("Yeni Proje"))
                         } icon: {
                             Image(systemName: "plus")
                         }
@@ -202,7 +211,7 @@ private struct ProjectWelcomeView: View {
                         showImporter = true
                     } label: {
                         Label {
-                            Text(verbatim: AppLocalization.string("Yedekten Aç…"))
+                            Text(verbatim: localized("Yedekten Aç…"))
                         } icon: {
                             Image(systemName: "folder")
                         }
@@ -212,7 +221,7 @@ private struct ProjectWelcomeView: View {
                 }
 
                 Label {
-                    Text(verbatim: AppLocalization.string("Projeleriniz bu Mac’te yerel olarak saklanır."))
+                    Text(verbatim: localized("Projeleriniz bu Mac’te yerel olarak saklanır."))
                 } icon: {
                     Image(systemName: "lock.shield")
                 }
@@ -236,8 +245,13 @@ private struct ProjectWelcomeView: View {
 
 private struct ProjectLibraryRow: View {
     let project: ProjectLibraryItem
+    let language: AppLanguage
     let action: () -> Void
     @State private var isHovered = false
+
+    private func localized(_ source: String) -> String {
+        AppLocalization.string(source, language: language)
+    }
 
     var body: some View {
         Button(action: action) {
@@ -257,7 +271,7 @@ private struct ProjectLibraryRow: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                     Group {
-                        Text(verbatim: AppLocalization.string(
+                        Text(verbatim: localized(
                             "\((project.participantCount ?? 0).formatted()) katılımcı · \((project.codingUnitCount ?? 0).formatted()) kodlama"
                         ))
                     }
@@ -268,7 +282,7 @@ private struct ProjectLibraryRow: View {
                 Spacer(minLength: 24)
 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(verbatim: AppLocalization.string("Son düzenleme"))
+                    Text(verbatim: localized("Son düzenleme"))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                     Text(project.updatedAt, format: .dateTime.day().month(.abbreviated).year().hour().minute())
@@ -302,7 +316,16 @@ private struct ProjectLibraryRow: View {
 private struct NewProjectView: View {
     @ObservedObject var library: ProjectLibraryStore
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(AppLocalization.languageKey) private var appLanguage = AppLanguage.english.rawValue
     @State private var name = ""
+
+    private var selectedLanguage: AppLanguage {
+        AppLanguage(rawValue: appLanguage) ?? .english
+    }
+
+    private func localized(_ source: String) -> String {
+        AppLocalization.string(source, language: selectedLanguage)
+    }
 
     private var canCreate: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -311,26 +334,26 @@ private struct NewProjectView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(verbatim: AppLocalization.string("Yeni Tematik Analiz Projesi"))
+                Text(verbatim: localized("Yeni Tematik Analiz Projesi"))
                     .font(.title2)
                     .fontWeight(.semibold)
-                Text(verbatim: AppLocalization.string("Katılımcılar, transkriptler, temalar ve kodlamalar bu projede birlikte saklanır."))
+                Text(verbatim: localized("Katılımcılar, transkriptler, temalar ve kodlamalar bu projede birlikte saklanır."))
                     .foregroundStyle(.secondary)
             }
 
             VStack(alignment: .leading, spacing: 7) {
-                Text(verbatim: AppLocalization.string("Proje adı"))
+                Text(verbatim: localized("Proje adı"))
                     .font(.callout)
                     .fontWeight(.medium)
-                TextField(AppLocalization.string("Örn. Yapay Zekâ Görüşmeleri"), text: $name)
+                TextField(localized("Örn. Yapay Zekâ Görüşmeleri"), text: $name)
                     .textFieldStyle(.roundedBorder)
             }
 
             HStack {
-                Button(AppLocalization.string("Vazgeç")) { dismiss() }
+                Button(localized("Vazgeç")) { dismiss() }
                     .keyboardShortcut(.cancelAction)
                 Spacer()
-                Button(AppLocalization.string("Proje Oluştur")) {
+                Button(localized("Proje Oluştur")) {
                     if library.createProject(named: name) { dismiss() }
                 }
                 .buttonStyle(.borderedProminent)

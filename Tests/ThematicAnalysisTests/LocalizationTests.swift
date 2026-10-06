@@ -59,6 +59,15 @@ final class LocalizationTests: XCTestCase {
         }
     }
 
+    func testExplicitLanguageLocalizationDoesNotDependOnStoredPreference() {
+        withLanguage(.english) {
+            XCTAssertEqual(AppLocalization.string("Bağlam", language: .turkish), "Bağlam")
+            XCTAssertEqual(AppLocalization.string("Bağlam", language: .english), "Context")
+            XCTAssertEqual(AppLocalization.string("Kaydedilen Analizler", language: .turkish), "Kaydedilen Analizler")
+            XCTAssertEqual(AppLocalization.string("Kaydedilen Analizler", language: .english), "Saved Analyses")
+        }
+    }
+
     func testTurkishKeepsSourceCopy() {
         withLanguage(.turkish) {
             XCTAssertEqual(AppLocalization.string("Katılımcılar"), "Katılımcılar")
